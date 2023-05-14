@@ -1,0 +1,16 @@
+.dub
+docs.json
+__dummy.html
+docs/
+/wox
+wox.so
+wox.dylib
+wox.dll
+wox.a
+wox.lib
+wox-test-*
+*.exe
+*.pdb
+*.o
+*.obj
+*.lst
