@@ -14,7 +14,17 @@ struct WoxForeignContext {
 
     ParsedArgs parsed_args;
 
+    HashTable!(string, string) env_c;
+    Array!(string) args_arguments_c;
+    HashTable!(string, string) args_options_c;
+    HashTable!(string, bool) args_flags_c;
+
     void derive() {
+        // turn everything into nogc usable data structures
+        foreach (env_key; env.byKey) {
+            env_c[env_key] = env[env_key];
+        }
+
         // parse the raw arguments
         parsed_args = ForeignWoxArgParser.parse(args.join(" "));
     }

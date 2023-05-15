@@ -3,15 +3,20 @@ module wox.foreign.imports;
 public {
     import std.stdio;
     import std.string;
-    import bc.string.string;
     import std.file;
     import std.path;
     import std.process;
+    import core.stdc.stdio;
+    import core.stdc.string;
+    import core.stdc.stdlib;
+
     import wren.compiler;
     import wren.vm;
     import wren.common;
-    import core.stdc.stdio;
-    import core.stdc.string;
+    
+
+    import bc.string.string;
+    import tanya.containers;
 }
 
 // util function for string comparison

@@ -63,8 +63,18 @@ struct ForeignWoxUtils {
             auto name = wrenGetSlotString(vm, 1);
             auto def = wrenGetSlotString(vm, 2);
 
-            // stub: return default
-            wrenSetSlotString(vm, 0, def);
+            auto name_len = strlen(name);
+            auto name_mem = alloca(name_len + 1);
+            auto name_buffer = cast(char[]) name_mem[0 .. name_len];
+            string str_name = ForeignWoxCommon.promote_cstring(name, name_buffer);
+
+            auto string_opt = wox_context.parsed_args.opt(str_name);
+            if (string_opt is null) {
+                wrenSetSlotString(vm, 0, def);
+                return;
+            }
+
+            wrenSetSlotString(vm, 0, string_opt.tempCString);
         }
 
         // cliopt_int(name, default) -> int

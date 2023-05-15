@@ -38,6 +38,29 @@ struct ParsedArgs {
         return format("ParsedArgs(arguments=%s, options=%s, flags=%s)",
             arguments, options, flags);
     }
+
+    string arg(int index) @nogc @safe nothrow {
+        if (index < arguments.length) {
+            return arguments[index];
+        }
+        return null;
+    }
+
+    string opt(string name) @nogc @safe nothrow {
+        if (name in options) {
+            return options[name];
+        }
+        return null;
+    }
+
+    bool flag(string name) @nogc @safe nothrow {
+        foreach (f; flags) {
+            if (f == name) {
+                return true;
+            }
+        }
+        return false;
+    }
 }
 
 struct ForeignWoxArgParser {
