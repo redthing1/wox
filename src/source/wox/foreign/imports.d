@@ -2,10 +2,10 @@ module wox.foreign.imports;
 
 public {
     import std.stdio;
+    import std.string;
+    import bc.string.string;
     import std.file;
     import std.path;
-    import std.conv;
-    import std.string;
     import std.process;
     import wren.compiler;
     import wren.vm;

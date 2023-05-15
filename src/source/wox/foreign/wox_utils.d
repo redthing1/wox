@@ -2,6 +2,8 @@ module wox.foreign.wox_utils;
 
 import wox.log;
 import wox.foreign.imports;
+import wox.foreign.binder;
+import wox.foreign.common;
 
 struct ForeignWoxUtils {
     static WrenForeignMethodFn bind(
@@ -45,8 +47,15 @@ struct ForeignWoxUtils {
     struct W {
         // cliargs() -> list[string]
         static void cliargs(WrenVM* vm) @nogc nothrow {
-            // stub: return empty list
+            // put all the cli args into a new list
             wrenSetSlotNewList(vm, 0);
+            wrenEnsureSlots(vm, cast(int)(1 + wox_context.args.length));
+
+            foreach (i, arg; wox_context.args) {
+                auto el_ix = cast(int)(i + 1);
+                wrenSetSlotString(vm, el_ix, arg.tempCString);
+                wrenInsertInList(vm, 0, cast(int) i, el_ix);
+            }
         }
 
         // cliarg(name, default) -> string

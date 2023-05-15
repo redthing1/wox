@@ -8,14 +8,14 @@ import wox.foreign.wox_utils;
 WoxForeignContext wox_context;
 
 struct WoxForeignContext {
-    Logger log;
-    string[] args;
+    std.string.string[] args;
     string[string] env;
 }
 
 static class WoxBuildForeignBinder {
     static void initialize(WoxForeignContext context) {
         wox_context = context;
+        // wox_context.derive();
     }
 
     // static void myFun(WrenVM* vm) @nogc nothrow {
