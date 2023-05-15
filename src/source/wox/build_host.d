@@ -3,6 +3,7 @@ module wox.build_host;
 import std.stdio;
 import std.file;
 import std.path;
+import std.conv;
 import std.string;
 import wren.compiler;
 import wren.vm;
@@ -19,14 +20,14 @@ enum WOX_MODULE = "wox";
 enum BUILDSCRIPT_MODULE = "build";
 
 class BuildHost {
-    Logger log;
+    static Logger log;
 
     this(Logger log) {
         this.log = log;
     }
 
     static void wren_write(WrenVM* vm, const(char)* text) {
-        printf("%s", text);
+        writef("%s", text.to!string);
     }
 
     static void wren_error(
@@ -34,19 +35,19 @@ class BuildHost {
     ) {
         switch (errorType) with (WrenErrorType) {
         case WREN_ERROR_COMPILE: {
-                printf("[wren] Error in %s at line %d: %s\n", module_, line, msg);
+                log.err("[wren] Error in %s at line %d: %s", module_.to!string, line, msg.to!string);
                 break;
             }
         case WREN_ERROR_STACK_TRACE: {
-                printf("[wren] Error in %s at line %d: %s\n", module_, line, msg);
+                log.err("[wren] Error in %s at line %d: %s", module_.to!string, line, msg.to!string);
                 break;
             }
         case WREN_ERROR_RUNTIME: {
-                printf("[wren] Runtime Error: %s\n", msg);
+                log.err("[wren] Runtime Error: %s", msg.to!string);
                 break;
             }
         default: {
-                printf("[wren] Unknown Error: %s\n", msg);
+                log.err("[wren] Unknown Error: %s", msg.to!string);
                 break;
             }
         }
