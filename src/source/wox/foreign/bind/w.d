@@ -1,11 +1,11 @@
-module wox.foreign.wox_utils;
+module wox.foreign.bind.w;
 
 import wox.log;
 import wox.foreign.imports;
 import wox.foreign.binder;
 import wox.foreign.utils;
 
-struct ForeignWoxUtils {
+struct BindForeignW {
     static WrenForeignMethodFn bind(
         WrenVM* vm, string moduleName, string className, string signature, bool isStatic
     ) {

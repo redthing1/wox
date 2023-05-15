@@ -4,7 +4,7 @@ import wox.log;
 import wox.foreign.imports;
 import wox.foreign.argparser;
 
-import wox.foreign.wox_utils;
+import wox.foreign.bind.w;
 
 WoxForeignContext wox_context;
 
@@ -36,7 +36,7 @@ static class WoxBuildForeignBinder {
 
         log.info("[foreign binder] binding %s", pretty_sig);
 
-        auto wox_utils_bind = ForeignWoxUtils.bind(
+        auto wox_utils_bind = BindForeignW.bind(
             vm, module_.to!string, className.to!string, signature.to!string, isStatic
         );
         if (wox_utils_bind !is null)
