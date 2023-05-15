@@ -13,6 +13,11 @@ class W {
     foreign static ext_add(paths, ext)                  // add ext to paths
     foreign static ext_replace(paths, ext1, ext2)       // replace ext1 with ext2
     foreign static ext_remove(paths, ext_pattern)       // remove exts matching ext_pattern
+    foreign static path_join(paths)                     // join paths
+    foreign static path_split(path)                     // split path
+    foreign static path_dirname(path)                   // dirname of path
+    foreign static path_basename(path)                  // basename of path
+    foreign static path_extname(path)                   // extname of path
 }
 
 // models
