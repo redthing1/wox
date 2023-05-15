@@ -16,7 +16,6 @@ public {
     
 
     import bc.string.string;
-    import tanya.containers;
 }
 
 // util function for string comparison
