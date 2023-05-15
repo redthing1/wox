@@ -25,13 +25,13 @@ class BuildHost {
         this.log = log;
     }
 
-    static void wren_write(WrenVM* vm, const(char)* text) @nogc nothrow {
+    static void wren_write(WrenVM* vm, const(char)* text) {
         printf("%s", text);
     }
 
     static void wren_error(
         WrenVM* vm, WrenErrorType errorType, const(char)* module_, int line, const(char)* msg
-    ) @nogc nothrow {
+    ) {
         switch (errorType) with (WrenErrorType) {
         case WREN_ERROR_COMPILE: {
                 printf("[wren] Error in %s at line %d: %s\n", module_, line, msg);

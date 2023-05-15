@@ -9,7 +9,7 @@ struct ForeignWoxUtils {
     static WrenForeignMethodFn bind(
         WrenVM* vm, const(char)* module_, const(char)* className,
         bool isStatic, const(char)* signature
-    ) @nogc nothrow {
+    ) {
         // printf("[ForeignWoxUtils::bind] %s::%s.%s\n", module_, className, signature);
 
         if (eq(className, "W")) {
@@ -46,7 +46,7 @@ struct ForeignWoxUtils {
 
     struct W {
         // cliopts() -> list[string]
-        static void cliopts(WrenVM* vm) @nogc nothrow {
+        static void cliopts(WrenVM* vm) {
             // put all the cli args into a new list
             wrenSetSlotNewList(vm, 0);
             wrenEnsureSlots(vm, cast(int)(1 + wox_context.args.length));
@@ -59,7 +59,7 @@ struct ForeignWoxUtils {
         }
 
         // cliopt(name, default) -> string
-        static void cliopt(WrenVM* vm) @nogc nothrow {
+        static void cliopt(WrenVM* vm) {
             auto name = wrenGetSlotString(vm, 1);
             auto def = wrenGetSlotString(vm, 2);
 
@@ -78,7 +78,7 @@ struct ForeignWoxUtils {
         }
 
         // cliopt_int(name, default) -> int
-        static void cliopt_int(WrenVM* vm) @nogc nothrow {
+        static void cliopt_int(WrenVM* vm) {
             auto name = wrenGetSlotString(vm, 1);
             auto def = wrenGetSlotDouble(vm, 2);
 
@@ -87,7 +87,7 @@ struct ForeignWoxUtils {
         }
 
         // cliopt_bool(name, default) -> bool
-        static void cliopt_bool(WrenVM* vm) @nogc nothrow {
+        static void cliopt_bool(WrenVM* vm) {
             auto name = wrenGetSlotString(vm, 1);
             auto def = wrenGetSlotBool(vm, 2);
 
@@ -96,7 +96,7 @@ struct ForeignWoxUtils {
         }
 
         // glob(pattern) -> list[string]
-        static void glob(WrenVM* vm) @nogc nothrow {
+        static void glob(WrenVM* vm) {
             auto pattern = wrenGetSlotString(vm, 1);
 
             // stub: return empty list
@@ -104,7 +104,7 @@ struct ForeignWoxUtils {
         }
 
         // ext_add(paths: list, ext) -> list[string]
-        static void ext_add(WrenVM* vm) @nogc nothrow {
+        static void ext_add(WrenVM* vm) {
             auto paths_len = wrenGetListCount(vm, 1);
             auto ext = wrenGetSlotString(vm, 2);
 
@@ -113,7 +113,7 @@ struct ForeignWoxUtils {
         }
 
         // ext_replace(paths: list, ext, new_ext) -> list[string]
-        static void ext_replace(WrenVM* vm) @nogc nothrow {
+        static void ext_replace(WrenVM* vm) {
             auto paths_len = wrenGetListCount(vm, 1);
             auto ext = wrenGetSlotString(vm, 2);
             auto new_ext = wrenGetSlotString(vm, 3);
@@ -123,7 +123,7 @@ struct ForeignWoxUtils {
         }
 
         // ext_remove(paths: list, ext) -> list[string]
-        static void ext_remove(WrenVM* vm) @nogc nothrow {
+        static void ext_remove(WrenVM* vm) {
             auto paths_len = wrenGetListCount(vm, 1);
             auto ext = wrenGetSlotString(vm, 2);
 
@@ -132,7 +132,7 @@ struct ForeignWoxUtils {
         }
 
         // path_join(paths: list) -> string
-        static void path_join(WrenVM* vm) @nogc nothrow {
+        static void path_join(WrenVM* vm) {
             auto paths_len = wrenGetListCount(vm, 1);
 
             // stub: return empty string
@@ -140,7 +140,7 @@ struct ForeignWoxUtils {
         }
 
         // path_split(path) -> list[string]
-        static void path_split(WrenVM* vm) @nogc nothrow {
+        static void path_split(WrenVM* vm) {
             auto path = wrenGetSlotString(vm, 1);
 
             // stub: return empty list
@@ -148,7 +148,7 @@ struct ForeignWoxUtils {
         }
 
         // path_dirname(path) -> string
-        static void path_dirname(WrenVM* vm) @nogc nothrow {
+        static void path_dirname(WrenVM* vm) {
             auto path = wrenGetSlotString(vm, 1);
 
             // stub: return empty string
@@ -156,7 +156,7 @@ struct ForeignWoxUtils {
         }
 
         // path_basename(path) -> string
-        static void path_basename(WrenVM* vm) @nogc nothrow {
+        static void path_basename(WrenVM* vm) {
             auto path = wrenGetSlotString(vm, 1);
 
             // stub: return empty string
@@ -164,7 +164,7 @@ struct ForeignWoxUtils {
         }
 
         // path_extname(path) -> string
-        static void path_extname(WrenVM* vm) @nogc nothrow {
+        static void path_extname(WrenVM* vm) {
             auto path = wrenGetSlotString(vm, 1);
 
             // stub: return empty string

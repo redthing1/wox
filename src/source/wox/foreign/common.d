@@ -4,7 +4,7 @@ import wox.foreign.imports;
 import wox.foreign.binder;
 
 static struct ForeignWoxCommon {
-    static string promote_cstring(const(char*) cstr, char[] buffer) @nogc nothrow {
+    static string promote_cstring(const(char*) cstr, char[] buffer) {
         auto str_len = strlen(cstr);
         // auto str = new char[str_len];
         assert(buffer.length >= str_len, "buffer too small");

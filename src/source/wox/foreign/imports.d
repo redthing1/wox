@@ -19,6 +19,6 @@ public {
 }
 
 // util function for string comparison
-bool eq(const(char)* a, const(char)* b) @nogc nothrow {
+bool eq(const(char)* a, const(char)* b) {
     return strcmp(a, b) == 0;
 }

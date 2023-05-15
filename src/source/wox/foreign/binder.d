@@ -36,7 +36,7 @@ static class WoxBuildForeignBinder {
         wox_context.derive();
     }
 
-    // static void myFun(WrenVM* vm) @nogc nothrow {
+    // static void myFun(WrenVM* vm) {
     //     double a = wrenGetSlotDouble(vm, 1);
     //     double b = wrenGetSlotDouble(vm, 2);
     //     double c = wrenGetSlotDouble(vm, 3);
@@ -45,7 +45,7 @@ static class WoxBuildForeignBinder {
     // }
 
     static WrenForeignMethodFn bindForeignMethod(WrenVM* vm, const(char)* module_,
-        const(char)* className, bool isStatic, const(char)* signature) @nogc nothrow {
+        const(char)* className, bool isStatic, const(char)* signature) {
         // create a string to contain the Module::Class.Method signature
         char[1024] pretty_signature;
         snprintf(pretty_signature.ptr, pretty_signature.length, "%s::%s.%s", module_, className, signature);
