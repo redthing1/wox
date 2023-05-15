@@ -3,6 +3,7 @@ module wox.foreign.wox_utils;
 import wox.log;
 import wox.foreign.imports;
 import wox.foreign.binder;
+import wox.foreign.utils;
 
 struct ForeignWoxUtils {
     static WrenForeignMethodFn bind(
@@ -78,8 +79,13 @@ struct ForeignWoxUtils {
             auto name = wrenGetSlotString(vm, 1);
             auto def = wrenGetSlotDouble(vm, 2);
 
-            // stub: return default
-            wrenSetSlotDouble(vm, 0, def);
+            auto int_opt = wox_context.parsed_args.opt(name.to!string);
+            if (int_opt is null) {
+                wrenSetSlotDouble(vm, 0, def);
+                return;
+            }
+
+            wrenSetSlotDouble(vm, 0, int_opt.to!double);
         }
 
         // cliopt_bool(name, default) -> bool
@@ -87,16 +93,28 @@ struct ForeignWoxUtils {
             auto name = wrenGetSlotString(vm, 1);
             auto def = wrenGetSlotBool(vm, 2);
 
-            // stub: return default
-            wrenSetSlotBool(vm, 0, def);
+            auto bool_opt = wox_context.parsed_args.flag(name.to!string);
+            wrenSetSlotBool(vm, 0, bool_opt);
         }
 
         // glob(pattern) -> list[string]
         static void glob(WrenVM* vm) {
             auto pattern = wrenGetSlotString(vm, 1);
 
-            // stub: return empty list
+            auto pattern_str = pattern.to!string;
+            // convert glob expression to regex
+            auto regex_str = pattern_str.replace("*", ".*");
+            auto matching_files = Utils.recursive_listdir_matching(".", regex_str);
+
+            // put all the matching files into a new list
             wrenSetSlotNewList(vm, 0);
+            wrenEnsureSlots(vm, cast(int)(1 + matching_files.length));
+
+            foreach (i, file; matching_files) {
+                auto el_ix = cast(int)(i + 1);
+                wrenSetSlotString(vm, el_ix, file.toStringz);
+                wrenInsertInList(vm, 0, cast(int) i, el_ix);
+            }
         }
 
         // ext_add(paths: list, ext) -> list[string]

@@ -53,7 +53,7 @@ class BuildHost {
         }
     }
 
-    bool build(string buildscript, string[] targets, string[] args, string[string] env) {
+    bool build(string buildscript, string[] targets, string cwd, string[] args, string[string] env) {
         log.trace("buildscript:\n%s", buildscript);
 
         // vm info
@@ -69,7 +69,7 @@ class BuildHost {
         config.errorFn = &wren_error;
 
         // bind foreign functions
-        WoxBuildForeignBinder.initialize(log, WoxForeignContext(args, env));
+        WoxBuildForeignBinder.initialize(log, WoxForeignContext(cwd, args, env));
         config.bindForeignMethodFn = &WoxBuildForeignBinder.bindForeignMethod;
 
         // create vm

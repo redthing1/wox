@@ -65,7 +65,7 @@ int main(string[] args) {
 	// pass it to the build host
 	auto host = new BuildHost(log);
 	auto build_targets = a.args("targets");
-	auto build_success = host.build(buildfile_contents, build_targets, buildfile_args, env_vars);
+	auto build_success = host.build(buildfile_contents, build_targets, workdir, buildfile_args, env_vars);
 
 	if (!build_success) {
 		log.error("build failed");

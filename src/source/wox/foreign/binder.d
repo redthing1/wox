@@ -9,6 +9,7 @@ import wox.foreign.wox_utils;
 WoxForeignContext wox_context;
 
 struct WoxForeignContext {
+    string cwd;
     std.string.string[] args;
     string[string] env;
 
