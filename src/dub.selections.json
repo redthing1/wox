@@ -2,6 +2,8 @@
 	"fileVersion": 1,
 	"versions": {
 		"colorize": "1.0.5",
-		"commandr": "0.2.0"
+		"commandr": "0.2.0",
+		"pegged": "0.4.8",
+		"zased": "0.1.1"
 	}
 }
