@@ -23,37 +23,37 @@ CliArgsGrammar:
 
     DashedName <- "--" Name / "-" Name
     Name <- AlphaNum+
-    Value <- AlphaNum+
     
+    Value <- !"-" (!Space .)*
     AlphaNum <- [a-zA-Z0-9]
     Space <~ " "
 `));
 
-struct ForeignWoxArgParser {
-    struct ParsedArgs {
-        string[] arguments;
-        string[string] options;
-        string[] flags;
+struct ParsedArgs {
+    string[] arguments;
+    string[string] options;
+    string[] flags;
 
-        string toString() {
-            return format("ParsedArgs(arguments=%s, options=%s, flags=%s)",
-                arguments, options, flags);
-        }
+    string toString() {
+        return format("ParsedArgs(arguments=%s, options=%s, flags=%s)",
+            arguments, options, flags);
     }
+}
 
+struct ForeignWoxArgParser {
     // parse arbitrary list of arguments into key-value pairs
-    static ParsedArgs parse(string[] args) {
+    static ParsedArgs parse(string raw_args) {
         ParsedArgs res;
 
-        auto parseTree = CliArgsGrammar(args.join(" "));
-        writefln("parse tree: %s", parseTree);
+        auto parseTree = CliArgsGrammar(raw_args);
+        // writefln("parse tree: %s", parseTree);
 
         string p_text(ParseTree pt) {
             return pt.input[pt.begin .. pt.end].dup;
         }
 
         void parse_to_result(ParseTree p) {
-            writefln("parse_to_result: walk: %s", p.name);
+            // writefln("parse_to_result: walk: %s", p.name);
             switch (p.name) {
             case "CliArgsGrammar.ArgsList":
                 foreach (child; p.children)
@@ -82,8 +82,18 @@ struct ForeignWoxArgParser {
 
         parse_to_result(parseTree.children[0]);
 
-        writefln("parse result: %s", res);
+        // writefln("parse result: %s", res);
 
         return res;
     }
+}
+
+@("argparser-test1")
+unittest {
+    auto res = ForeignWoxArgParser.parse(
+        "bean.txt -v --quiet -i input.txt -o output.txt"
+    );
+    assert(res.arguments == ["bean.txt"], "arguments");
+    assert(res.options == ["-i": "input.txt", "-o": "output.txt"], "options");
+    assert(res.flags == ["-v", "--quiet"], "flags");
 }

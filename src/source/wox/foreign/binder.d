@@ -12,11 +12,11 @@ struct WoxForeignContext {
     std.string.string[] args;
     string[string] env;
 
-    ForeignWoxArgParser.ParsedArgs parsed_args;
+    ParsedArgs parsed_args;
 
     void derive() {
         // parse the raw arguments
-        parsed_args = ForeignWoxArgParser.parse(args);
+        parsed_args = ForeignWoxArgParser.parse(args.join(" "));
     }
 }
 
