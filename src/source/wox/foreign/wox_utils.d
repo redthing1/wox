@@ -86,36 +86,35 @@ struct ForeignWoxUtils {
 
         // ext_add(paths: list, ext) -> list[string]
         static void ext_add(WrenVM* vm) @nogc nothrow {
-            // paths is a list of strings
-            auto paths = wrenGetSlotString(vm, 1);
+            auto paths_len = wrenGetListCount(vm, 1);
             auto ext = wrenGetSlotString(vm, 2);
 
             // stub: return empty list
             wrenSetSlotNewList(vm, 0);
         }
 
-        // ext_replace(paths, ext1, ext2) -> list[string]
+        // ext_replace(paths: list, ext, new_ext) -> list[string]
         static void ext_replace(WrenVM* vm) @nogc nothrow {
-            auto paths = wrenGetSlotString(vm, 1);
-            auto ext1 = wrenGetSlotString(vm, 2);
-            auto ext2 = wrenGetSlotString(vm, 3);
+            auto paths_len = wrenGetListCount(vm, 1);
+            auto ext = wrenGetSlotString(vm, 2);
+            auto new_ext = wrenGetSlotString(vm, 3);
 
             // stub: return empty list
             wrenSetSlotNewList(vm, 0);
         }
 
-        // ext_remove(paths, ext_pattern) -> list[string]
+        // ext_remove(paths: list, ext) -> list[string]
         static void ext_remove(WrenVM* vm) @nogc nothrow {
-            auto paths = wrenGetSlotString(vm, 1);
-            auto ext_pattern = wrenGetSlotString(vm, 2);
+            auto paths_len = wrenGetListCount(vm, 1);
+            auto ext = wrenGetSlotString(vm, 2);
 
             // stub: return empty list
             wrenSetSlotNewList(vm, 0);
         }
 
-        // path_join(paths) -> string
+        // path_join(paths: list) -> string
         static void path_join(WrenVM* vm) @nogc nothrow {
-            auto paths = wrenGetSlotString(vm, 1);
+            auto paths_len = wrenGetListCount(vm, 1);
 
             // stub: return empty string
             wrenSetSlotString(vm, 0, "");

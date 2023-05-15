@@ -24,7 +24,8 @@ class Command {
 }
 
 // data stuff for recipes: these don't actually execute but rather return data
-
-var R = Fn.new { |cmd|
-    Command.new(cmd)
+class R {
+    static c(cmd) {
+        Command.new(cmd)
+    }
 }
