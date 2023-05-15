@@ -120,69 +120,139 @@ struct ForeignWoxUtils {
         // ext_add(paths: list, ext) -> list[string]
         static void ext_add(WrenVM* vm) {
             auto paths_len = wrenGetListCount(vm, 1);
-            auto ext = wrenGetSlotString(vm, 2);
+            auto ext = wrenGetSlotString(vm, 2).to!string;
 
-            // stub: return empty list
+            string[] results;
+            for (auto i = 0; i < paths_len; i++) {
+                // grab elements and put them in slot 0 temporarily
+                wrenGetListElement(vm, 1, i, 0);
+                auto path = wrenGetSlotString(vm, 0).to!string;
+                results ~= path ~ ext;
+            }
+
+            // put all the results into a new list
             wrenSetSlotNewList(vm, 0);
+            wrenEnsureSlots(vm, cast(int)(1 + results.length));
+
+            foreach (i, result; results) {
+                auto el_ix = cast(int)(i + 1);
+                wrenSetSlotString(vm, el_ix, result.toStringz);
+                wrenInsertInList(vm, 0, cast(int) i, el_ix);
+            }
         }
 
         // ext_replace(paths: list, ext, new_ext) -> list[string]
         static void ext_replace(WrenVM* vm) {
             auto paths_len = wrenGetListCount(vm, 1);
-            auto ext = wrenGetSlotString(vm, 2);
-            auto new_ext = wrenGetSlotString(vm, 3);
+            auto ext = wrenGetSlotString(vm, 2).to!string;
+            auto new_ext = wrenGetSlotString(vm, 3).to!string;
 
-            // stub: return empty list
+            string[] results;
+            for (auto i = 0; i < paths_len; i++) {
+                // grab elements and put them in slot 0 temporarily
+                wrenGetListElement(vm, 1, i, 0);
+                auto path = wrenGetSlotString(vm, 0).to!string;
+                results ~= path.replace(ext, new_ext);
+            }
+
+            // put all the results into a new list
             wrenSetSlotNewList(vm, 0);
+            wrenEnsureSlots(vm, cast(int)(1 + results.length));
+
+            foreach (i, result; results) {
+                auto el_ix = cast(int)(i + 1);
+                wrenSetSlotString(vm, el_ix, result.toStringz);
+                wrenInsertInList(vm, 0, cast(int) i, el_ix);
+            }
         }
 
         // ext_remove(paths: list, ext) -> list[string]
         static void ext_remove(WrenVM* vm) {
             auto paths_len = wrenGetListCount(vm, 1);
-            auto ext = wrenGetSlotString(vm, 2);
+            auto ext = wrenGetSlotString(vm, 2).to!string;
 
-            // stub: return empty list
+            string[] results;
+            for (auto i = 0; i < paths_len; i++) {
+                // grab elements and put them in slot 0 temporarily
+                wrenGetListElement(vm, 1, i, 0);
+                auto path = wrenGetSlotString(vm, 0).to!string;
+                if (ext == "") {
+                    // if ext is empty, remove the last extension
+                    auto last_dot_ix = path.lastIndexOf(".");
+                    results ~= path[0 .. last_dot_ix];
+                } else {
+                    // otherwise, remove the specified extension
+                    results ~= path.replace(ext, "");
+                }
+            }
+
+            // put all the results into a new list
             wrenSetSlotNewList(vm, 0);
+            wrenEnsureSlots(vm, cast(int)(1 + results.length));
+
+            foreach (i, result; results) {
+                auto el_ix = cast(int)(i + 1);
+                wrenSetSlotString(vm, el_ix, result.toStringz);
+                wrenInsertInList(vm, 0, cast(int) i, el_ix);
+            }
         }
 
         // path_join(paths: list) -> string
         static void path_join(WrenVM* vm) {
             auto paths_len = wrenGetListCount(vm, 1);
 
-            // stub: return empty string
-            wrenSetSlotString(vm, 0, "");
+            string[] path_segments;
+            for (auto i = 0; i < paths_len; i++) {
+                // grab elements and put them in slot 0 temporarily
+                wrenGetListElement(vm, 1, i, 0);
+                auto path = wrenGetSlotString(vm, 0).to!string;
+                path_segments ~= path;
+            }
+            string joined_path = std.path.buildPath(path_segments);
+
+            wrenSetSlotString(vm, 0, joined_path.toStringz);
         }
 
         // path_split(path) -> list[string]
         static void path_split(WrenVM* vm) {
-            auto path = wrenGetSlotString(vm, 1);
+            auto path = wrenGetSlotString(vm, 1).to!string;
 
-            // stub: return empty list
+            auto path_segments = path.split(std.path.dirSeparator);
+            // put all the path segments into a new list
             wrenSetSlotNewList(vm, 0);
+            wrenEnsureSlots(vm, cast(int)(1 + path_segments.length));
+            foreach (i, path_segment; path_segments) {
+                auto el_ix = cast(int)(i + 1);
+                wrenSetSlotString(vm, el_ix, path_segment.toStringz);
+                wrenInsertInList(vm, 0, cast(int) i, el_ix);
+            }
         }
 
         // path_dirname(path) -> string
         static void path_dirname(WrenVM* vm) {
-            auto path = wrenGetSlotString(vm, 1);
+            auto path = wrenGetSlotString(vm, 1).to!string;
 
-            // stub: return empty string
-            wrenSetSlotString(vm, 0, "");
+            auto result = std.path.dirName(path);
+
+            wrenSetSlotString(vm, 0, result.toStringz);
         }
 
         // path_basename(path) -> string
         static void path_basename(WrenVM* vm) {
-            auto path = wrenGetSlotString(vm, 1);
+            auto path = wrenGetSlotString(vm, 1).to!string;
 
-            // stub: return empty string
-            wrenSetSlotString(vm, 0, "");
+            auto result = std.path.baseName(path);
+
+            wrenSetSlotString(vm, 0, result.toStringz);
         }
 
         // path_extname(path) -> string
         static void path_extname(WrenVM* vm) {
-            auto path = wrenGetSlotString(vm, 1);
+            auto path = wrenGetSlotString(vm, 1).to!string;
 
-            // stub: return empty string
-            wrenSetSlotString(vm, 0, "");
+            auto result = std.path.extension(path);
+
+            wrenSetSlotString(vm, 0, result.toStringz);
         }
     }
 }
