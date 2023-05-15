@@ -35,7 +35,9 @@ static class WoxBuildForeignBinder {
 
         log.info("[foreign binder] binding %s", pretty_sig);
 
-        auto wox_utils_bind = ForeignWoxUtils.bind(vm, module_, className, isStatic, signature);
+        auto wox_utils_bind = ForeignWoxUtils.bind(
+            vm, module_.to!string, className.to!string, signature.to!string, isStatic
+        );
         if (wox_utils_bind !is null)
             return wox_utils_bind;
 

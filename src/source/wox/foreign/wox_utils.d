@@ -6,38 +6,40 @@ import wox.foreign.binder;
 
 struct ForeignWoxUtils {
     static WrenForeignMethodFn bind(
-        WrenVM* vm, const(char)* module_, const(char)* className,
-        bool isStatic, const(char)* signature
+        WrenVM* vm, string moduleName, string className, string signature, bool isStatic
     ) {
-        // printf("[ForeignWoxUtils::bind] %s::%s.%s\n", module_, className, signature);
-
-        if (eq(className, "W")) {
-            if (eq(signature, "cliopts()"))
+        if (className == "W") {
+            switch (signature) {
+            case "cliopts()":
                 return &W.cliopts;
-            else if (eq(signature, "cliopt(_,_)"))
+            case "cliopt(_,_)":
                 return &W.cliopt;
-            else if (eq(signature, "cliopt_int(_,_)"))
+            case "cliopt_int(_,_)":
                 return &W.cliopt_int;
-            else if (eq(signature, "cliopt_bool(_,_)"))
+            case "cliopt_bool(_,_)":
                 return &W.cliopt_bool;
-            else if (eq(signature, "glob(_)"))
+            case "glob(_)":
                 return &W.glob;
-            else if (eq(signature, "ext_add(_,_)"))
+            case "ext_add(_,_)":
                 return &W.ext_add;
-            else if (eq(signature, "ext_replace(_,_,_)"))
+            case "ext_replace(_,_,_)":
                 return &W.ext_replace;
-            else if (eq(signature, "ext_remove(_,_)"))
+            case "ext_remove(_,_)":
                 return &W.ext_remove;
-            else if (eq(signature, "path_join(_)"))
+            case "path_join(_)":
                 return &W.path_join;
-            else if (eq(signature, "path_split(_)"))
+            case "path_split(_)":
                 return &W.path_split;
-            else if (eq(signature, "path_dirname(_)"))
+            case "path_dirname(_)":
                 return &W.path_dirname;
-            else if (eq(signature, "path_basename(_)"))
+            case "path_basename(_)":
                 return &W.path_basename;
-            else if (eq(signature, "path_extname(_)"))
+            case "path_extname(_)":
                 return &W.path_extname;
+            default:
+                enforce(0, format("failed to bind unknown method %s.%s", className, signature));
+                assert(0);
+            }
         }
 
         return null;

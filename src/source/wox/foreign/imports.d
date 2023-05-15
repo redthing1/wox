@@ -10,13 +10,9 @@ public {
     import core.stdc.stdio;
     import core.stdc.string;
     import core.stdc.stdlib;
+    import std.exception: enforce;
 
     import wren.compiler;
     import wren.vm;
     import wren.common;
-}
-
-// util function for string comparison
-bool eq(const(char)* a, const(char)* b) {
-    return strcmp(a, b) == 0;
 }
