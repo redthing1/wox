@@ -6,6 +6,7 @@ import std.file;
 import std.algorithm;
 import std.array;
 import std.conv;
+import std.process;
 import commandr;
 
 import wox.build_host;
@@ -36,6 +37,8 @@ int main(string[] args) {
 	log.use_colors = true;
 	log.meta_timestamp = false;
 
+	auto env_vars = environment.toAA();
+
 	log.info("invocation: %s", args);
 	log.info("  build file: %s", a.option("file"));
 	log.info("  targets: %s", a.args("targets"));
@@ -62,7 +65,7 @@ int main(string[] args) {
 	// pass it to the build host
 	auto host = new BuildHost(log);
 	auto build_targets = a.args("targets");
-	auto build_success = host.build(buildfile_contents, build_targets, buildfile_args);
+	auto build_success = host.build(buildfile_contents, build_targets, buildfile_args, env_vars);
 
 	if (!build_success) {
 		log.error("build failed");

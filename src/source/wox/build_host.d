@@ -7,8 +7,11 @@ import std.string;
 import wren.compiler;
 import wren.vm;
 import wren.common;
+import core.stdc.stdio;
+import core.stdc.string;
 
 import wox.log;
+import wox.foreign.binder;
 
 enum WOX_SCRIPT = import("wox.wren");
 
@@ -31,25 +34,25 @@ class BuildHost {
     ) @nogc nothrow {
         switch (errorType) with (WrenErrorType) {
         case WREN_ERROR_COMPILE: {
-                printf("[%s line %d] [Error] %s\n", module_, line, msg);
+                printf("[wren] Error in %s at line %d: %s\n", module_, line, msg);
                 break;
             }
         case WREN_ERROR_STACK_TRACE: {
-                printf("[%s line %d] in %s\n", module_, line, msg);
+                printf("[wren] Error in %s at line %d: %s\n", module_, line, msg);
                 break;
             }
         case WREN_ERROR_RUNTIME: {
-                printf("[Runtime Error] %s\n", msg);
+                printf("[wren] Runtime Error: %s\n", msg);
                 break;
             }
         default: {
-                printf("Unknown Error\n");
+                printf("[wren] Unknown Error: %s\n", msg);
                 break;
             }
         }
     }
 
-    bool build(string buildscript, string[] targets, string[] args) {
+    bool build(string buildscript, string[] targets, string[] args, string[string] env) {
         log.trace("buildscript:\n%s", buildscript);
 
         // vm info
@@ -63,6 +66,10 @@ class BuildHost {
         // output functions
         config.writeFn = &wren_write;
         config.errorFn = &wren_error;
+
+        // bind foreign functions
+        WoxBuildForeignBinder.initialize(WoxForeignContext(log, args, env));
+        config.bindForeignMethodFn = &WoxBuildForeignBinder.bindForeignMethod;
 
         // create vm
         WrenVM* vm = wrenNewVM(&config);
