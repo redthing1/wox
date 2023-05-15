@@ -2,6 +2,7 @@ module wox.foreign.binder;
 
 import wox.log;
 import wox.foreign.imports;
+import wox.foreign.argparser;
 
 import wox.foreign.wox_utils;
 
@@ -10,12 +11,19 @@ WoxForeignContext wox_context;
 struct WoxForeignContext {
     std.string.string[] args;
     string[string] env;
+
+    ForeignWoxArgParser.ParsedArgs parsed_args;
+
+    void derive() {
+        // parse the raw arguments
+        parsed_args = ForeignWoxArgParser.parse(args);
+    }
 }
 
 static class WoxBuildForeignBinder {
     static void initialize(WoxForeignContext context) {
         wox_context = context;
-        // wox_context.derive();
+        wox_context.derive();
     }
 
     // static void myFun(WrenVM* vm) @nogc nothrow {
