@@ -19,6 +19,8 @@ int main(string[] args) {
 		.add(new Flag("v", "verbose", "turns on more verbose output").repeating)
 		.add(new Option("f", "file", "build file to use")
 				.defaultValue(DEFAULT_BUILDFILE_NAME))
+		.add(new Option("C", "workdir", "change to this directory before doing anything")
+				.defaultValue("."))
 		.parse(args);
 
 	auto verbose = min(a.occurencesOf("verbose"), 3);
@@ -29,6 +31,19 @@ int main(string[] args) {
 		writefln("  build file: %s", a.option("file"));
 		writefln("  targets: %s", a.args("targets"));
 	}
+
+	// change to working directory
+	auto workdir = a.option("workdir");
+	if (!std.file.exists(workdir)) {
+		writefln("Error: working directory '%s' does not exist", workdir);
+		return 1;
+	}
+
+	if (verbose > 0) {
+		writefln("changing to working directory '%s'", workdir);
+	}
+
+	std.file.chdir(workdir);
 
 	// open build file
 	auto buildfile_path = a.option("file");
