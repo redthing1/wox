@@ -6,8 +6,14 @@ import std.path;
 import std.string;
 import wren.compiler;
 import wren.vm;
+import wren.common;
 
 import wox.log;
+
+enum WOX_SCRIPT = import("wox.wren");
+
+enum WOX_MODULE = "wox";
+enum BUILDSCRIPT_MODULE = "build";
 
 class BuildHost {
     Logger log;
@@ -43,13 +49,30 @@ class BuildHost {
         }
     }
 
-    bool build(string buildfile_contents, string[] targets, string[] args) {
+    bool build(string buildscript, string[] targets, string[] args) {
+        log.trace("buildscript:\n%s", buildscript);
+
+        // vm info
+        auto wren_ver = wrenGetVersionNumber();
+        log.trace("wren version: %s", wren_ver);
+
+        // set up vm
         WrenConfiguration config;
         wrenInitConfiguration(&config);
+
+        // output functions
         config.writeFn = &wren_write;
         config.errorFn = &wren_error;
 
+        // create vm
         WrenVM* vm = wrenNewVM(&config);
+
+        // create the wox module
+        log.trace("loading wox module");
+        auto woxModule = wrenInterpret(vm, WOX_MODULE.toStringz, WOX_SCRIPT.toStringz);
+
+        // run buildscript module
+        auto result = wrenInterpret(vm, BUILDSCRIPT_MODULE.toStringz, buildscript.toStringz);
 
         return false;
     }

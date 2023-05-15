@@ -1,3 +1,4 @@
+import "wox" for W, R
 
 var TARGET_MAIN = "hello"
 var TARGET_COMPRESSED = "hello.zst"
@@ -38,7 +39,7 @@ for (src_ix in 0...srcs.count) {
         [o_file],
         [
             // run gcc to compile a single .c file into a .o file
-            R("%(cc) %(cflags) -c %(c_file) -o %(o_file)"),
+            R.c("%(cc) %(cflags) -c %(c_file) -o %(o_file)"),
         ]
     )
     obj_recipes.add(obj_recipe)
@@ -50,7 +51,7 @@ var main_recipe = W.recipe(
     [TARGET_MAIN],
     [
         // link all the .o files into the main target
-        R("%(cc) %(cflags) %(objs) -o %(TARGET_MAIN)"),
+        R.c("%(cc) %(cflags) %(objs) -o %(TARGET_MAIN)"),
     ]
 )
 
@@ -60,7 +61,7 @@ var compressed_recipe = W.recipe(
     [TARGET_COMPRESSED],
     [
         // compress the main target
-        R("tar --zstd -cf %(TARGET_COMPRESSED) %(TARGET_MAIN)"),
+        R.c("tar --zstd -cf %(TARGET_COMPRESSED) %(TARGET_MAIN)"),
     ]
 )
 
@@ -70,7 +71,7 @@ var clean_recipe = W.phony_recipe(
     [],
     [
         // remove all the .o files and the targets
-        R("rm -f %(objs) %(TARGET_MAIN) %(TARGET_COMPRESSED)"),
+        R.c("rm -f %(objs) %(TARGET_MAIN) %(TARGET_COMPRESSED)"),
     ]
 )
 
@@ -80,7 +81,7 @@ var upload_main_recipe = W.phony_recipe(
     [srcs],
     [
         // cat all the source files together and scp that to example.com
-        R("cat %(srcs) | ssh example.com 'cat > /tmp/hello.c'"),
+        R.c("cat %(srcs) | ssh example.com 'cat > /tmp/hello.c'"),
     ]
 )
 
