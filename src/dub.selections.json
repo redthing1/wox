@@ -7,7 +7,7 @@
 		"mir-linux-kernel": "1.0.1",
 		"pegged": "0.4.8",
 		"silly": "1.1.1",
-		"wren-port": "1.1.7",
+		"wren-port": {"path":"../lib/wren-port"},
 		"zased": "0.1.1"
 	}
 }
