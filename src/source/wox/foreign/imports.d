@@ -5,6 +5,7 @@ public {
     import std.string;
     import std.file;
     import std.path;
+    import std.conv;
     import std.process;
     import core.stdc.stdio;
     import core.stdc.string;
@@ -13,9 +14,6 @@ public {
     import wren.compiler;
     import wren.vm;
     import wren.common;
-    
-
-    import bc.string.string;
 }
 
 // util function for string comparison

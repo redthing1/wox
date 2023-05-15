@@ -14,53 +14,32 @@ struct WoxForeignContext {
 
     ParsedArgs parsed_args;
 
-    // HashTable!(string, string) env_c;
-    // Array!(string) args_arguments_c;
-    // HashTable!(string, string) args_options_c;
-    // HashTable!(string, bool) args_flags_c;
-
     void derive() {
-        // turn everything into nogc usable data structures
-        // foreach (env_key; env.byKey) {
-        //     env_c[env_key] = env[env_key];
-        // }
-
-        // parse the raw arguments
         parsed_args = ForeignWoxArgParser.parse(args.join(" "));
     }
 }
 
 static class WoxBuildForeignBinder {
-    static void initialize(WoxForeignContext context) {
+    static Logger log;
+
+    static void initialize(Logger log, WoxForeignContext context) {
+        this.log = log;
         wox_context = context;
         wox_context.derive();
     }
 
-    // static void myFun(WrenVM* vm) {
-    //     double a = wrenGetSlotDouble(vm, 1);
-    //     double b = wrenGetSlotDouble(vm, 2);
-    //     double c = wrenGetSlotDouble(vm, 3);
-
-    //     printf("Called with %f, %f, %f\n", a, b, c);
-    // }
-
     static WrenForeignMethodFn bindForeignMethod(WrenVM* vm, const(char)* module_,
         const(char)* className, bool isStatic, const(char)* signature) {
-        // create a string to contain the Module::Class.Method signature
-        char[1024] pretty_signature;
-        snprintf(pretty_signature.ptr, pretty_signature.length, "%s::%s.%s", module_, className, signature);
-        pretty_signature[cast(int) pretty_signature.length - 1] = '\0';
+        auto pretty_sig = format("%s::%s.%s",
+            module_.to!string, className.to!string, signature.to!string);
 
-        printf("[foreign binder] binding %s\n", pretty_signature.ptr);
-
-        // if (strcmp(signature, "myfun_(_,_,_)") == 0)
-        //     return &myFun;
+        log.info("[foreign binder] binding %s", pretty_sig);
 
         auto wox_utils_bind = ForeignWoxUtils.bind(vm, module_, className, isStatic, signature);
         if (wox_utils_bind !is null)
             return wox_utils_bind;
 
-        printf("[foreign binder]   error: no binding found for %s\n", pretty_signature.ptr);
+        log.err("[foreign binder]   error: no binding found for %s", pretty_sig);
 
         return null;
     }

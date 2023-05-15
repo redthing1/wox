@@ -3,7 +3,6 @@ module wox.foreign.wox_utils;
 import wox.log;
 import wox.foreign.imports;
 import wox.foreign.binder;
-import wox.foreign.common;
 
 struct ForeignWoxUtils {
     static WrenForeignMethodFn bind(
@@ -53,7 +52,7 @@ struct ForeignWoxUtils {
 
             foreach (i, arg; wox_context.args) {
                 auto el_ix = cast(int)(i + 1);
-                wrenSetSlotString(vm, el_ix, arg.tempCString);
+                wrenSetSlotString(vm, el_ix, arg.toStringz);
                 wrenInsertInList(vm, 0, cast(int) i, el_ix);
             }
         }
@@ -63,18 +62,13 @@ struct ForeignWoxUtils {
             auto name = wrenGetSlotString(vm, 1);
             auto def = wrenGetSlotString(vm, 2);
 
-            auto name_len = strlen(name);
-            auto name_mem = alloca(name_len + 1);
-            auto name_buffer = cast(char[]) name_mem[0 .. name_len];
-            string str_name = ForeignWoxCommon.promote_cstring(name, name_buffer);
-
-            auto string_opt = wox_context.parsed_args.opt(str_name);
+            auto string_opt = wox_context.parsed_args.opt(name.to!string);
             if (string_opt is null) {
                 wrenSetSlotString(vm, 0, def);
                 return;
             }
 
-            wrenSetSlotString(vm, 0, string_opt.tempCString);
+            wrenSetSlotString(vm, 0, string_opt.toStringz);
         }
 
         // cliopt_int(name, default) -> int
