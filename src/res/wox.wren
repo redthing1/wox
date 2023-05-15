@@ -3,10 +3,10 @@
 // general wox utils
 class W {
     // cli args
-    foreign static cliargs()                            // all cli args
-    foreign static cliarg(name, default)                // string cli arg
-    foreign static cliarg_int(name, default)            // int cli arg
-    foreign static cliarg_bool(name, default)           // bool cli arg
+    foreign static cliopts()                            // all cli args
+    foreign static cliopt(name, default)                // string cli opt
+    foreign static cliopt_int(name, default)            // int cli opt
+    foreign static cliopt_bool(name, default)           // bool cli opt
 
     // path utils
     foreign static glob(pattern)                        // glob files

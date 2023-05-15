@@ -13,14 +13,14 @@ struct ForeignWoxUtils {
         // printf("[ForeignWoxUtils::bind] %s::%s.%s\n", module_, className, signature);
 
         if (eq(className, "W")) {
-            if (eq(signature, "cliargs()"))
-                return &W.cliargs;
-            else if (eq(signature, "cliarg(_,_)"))
-                return &W.cliarg;
-            else if (eq(signature, "cliarg_int(_,_)"))
-                return &W.cliarg_int;
-            else if (eq(signature, "cliarg_bool(_,_)"))
-                return &W.cliarg_bool;
+            if (eq(signature, "cliopts()"))
+                return &W.cliopts;
+            else if (eq(signature, "cliopt(_,_)"))
+                return &W.cliopt;
+            else if (eq(signature, "cliopt_int(_,_)"))
+                return &W.cliopt_int;
+            else if (eq(signature, "cliopt_bool(_,_)"))
+                return &W.cliopt_bool;
             else if (eq(signature, "glob(_)"))
                 return &W.glob;
             else if (eq(signature, "ext_add(_,_)"))
@@ -45,8 +45,8 @@ struct ForeignWoxUtils {
     }
 
     struct W {
-        // cliargs() -> list[string]
-        static void cliargs(WrenVM* vm) @nogc nothrow {
+        // cliopts() -> list[string]
+        static void cliopts(WrenVM* vm) @nogc nothrow {
             // put all the cli args into a new list
             wrenSetSlotNewList(vm, 0);
             wrenEnsureSlots(vm, cast(int)(1 + wox_context.args.length));
@@ -58,8 +58,8 @@ struct ForeignWoxUtils {
             }
         }
 
-        // cliarg(name, default) -> string
-        static void cliarg(WrenVM* vm) @nogc nothrow {
+        // cliopt(name, default) -> string
+        static void cliopt(WrenVM* vm) @nogc nothrow {
             auto name = wrenGetSlotString(vm, 1);
             auto def = wrenGetSlotString(vm, 2);
 
@@ -67,8 +67,8 @@ struct ForeignWoxUtils {
             wrenSetSlotString(vm, 0, def);
         }
 
-        // cliarg_int(name, default) -> int
-        static void cliarg_int(WrenVM* vm) @nogc nothrow {
+        // cliopt_int(name, default) -> int
+        static void cliopt_int(WrenVM* vm) @nogc nothrow {
             auto name = wrenGetSlotString(vm, 1);
             auto def = wrenGetSlotDouble(vm, 2);
 
@@ -76,8 +76,8 @@ struct ForeignWoxUtils {
             wrenSetSlotDouble(vm, 0, def);
         }
 
-        // cliarg_bool(name, default) -> bool
-        static void cliarg_bool(WrenVM* vm) @nogc nothrow {
+        // cliopt_bool(name, default) -> bool
+        static void cliopt_bool(WrenVM* vm) @nogc nothrow {
             auto name = wrenGetSlotString(vm, 1);
             auto def = wrenGetSlotBool(vm, 2);
 

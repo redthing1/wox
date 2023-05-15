@@ -12,7 +12,7 @@ import pegged.grammar;
 // note that both flags and options can use either single or double dashes
 // we make our best effort to just guess based on conp_text
 mixin(grammar(`
-CliArgsGrammar:
+clioptsGrammar:
     ArgsList <- (Arg :Space?)*
 
     Arg <- Option / Flag / Argument
@@ -45,7 +45,7 @@ struct ForeignWoxArgParser {
     static ParsedArgs parse(string raw_args) {
         ParsedArgs res;
 
-        auto parseTree = CliArgsGrammar(raw_args);
+        auto parseTree = clioptsGrammar(raw_args);
         // writefln("parse tree: %s", parseTree);
 
         string p_text(ParseTree pt) {
@@ -55,23 +55,23 @@ struct ForeignWoxArgParser {
         void parse_to_result(ParseTree p) {
             // writefln("parse_to_result: walk: %s", p.name);
             switch (p.name) {
-            case "CliArgsGrammar.ArgsList":
+            case "clioptsGrammar.ArgsList":
                 foreach (child; p.children)
                     parse_to_result(child);
                 break;
-            case "CliArgsGrammar.Arg":
+            case "clioptsGrammar.Arg":
                 parse_to_result(p.children[0]);
                 break;
-            case "CliArgsGrammar.Option":
+            case "clioptsGrammar.Option":
                 auto option_name = p_text(p.children[0]);
                 auto option_value = p_text(p.children[1]);
                 res.options[option_name] = option_value;
                 break;
-            case "CliArgsGrammar.Flag":
+            case "clioptsGrammar.Flag":
                 auto flag_name = p_text(p.children[0]);
                 res.flags ~= flag_name;
                 break;
-            case "CliArgsGrammar.Argument":
+            case "clioptsGrammar.Argument":
                 auto argument_value = p_text(p.children[0]);
                 res.arguments ~= argument_value;
                 break;
