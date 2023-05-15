@@ -1,0 +1,94 @@
+
+var TARGET_MAIN = "hello"
+var TARGET_COMPRESSED = "hello.zst"
+
+// args
+var debug = W.clivar_bool("DEBUG", false)
+var opt_level = W.cliarg_int("-O", 2)
+var cc = W.cliarg("-cc", "gcc")
+
+// cflags
+var cflags = ["-Wall"]
+
+if (debug) cflags.add("-g")
+cflags.add("-O%(opt_level)")
+
+// libs
+var libs = ["m"]
+for (lib in libs) {
+    cflags.add("-l%(lib)")
+}
+
+// srcs
+var srcs = W.glob("./*.c")
+
+// objs
+var objs = W.ext_replace(srcs, ".c", ".o")
+
+// return the recipes
+
+// 1. a recipe for each .c -> .o
+var obj_recipes = []
+for (src_ix in 0...srcs.count) {
+    var c_file = srcs[src_ix]
+    var o_file = objs[src_ix]
+
+    var obj_recipe = W.recipe(
+        [c_file],
+        [o_file],
+        [
+            // run gcc to compile a single .c file into a .o file
+            R("%(cc) %(cflags) -c %(c_file) -o %(o_file)"),
+        ]
+    )
+    obj_recipes.add(obj_recipe)
+}
+
+// 2. a recipe for the main target
+var main_recipe = W.recipe(
+    objs,
+    [TARGET_MAIN],
+    [
+        // link all the .o files into the main target
+        R("%(cc) %(cflags) %(objs) -o %(TARGET_MAIN)"),
+    ]
+)
+
+// 3. a recipe for the compressed target
+var compressed_recipe = W.recipe(
+    [TARGET_MAIN],
+    [TARGET_COMPRESSED],
+    [
+        // compress the main target
+        R("tar --zstd -cf %(TARGET_COMPRESSED) %(TARGET_MAIN)"),
+    ]
+)
+
+// 4. a phony recipe for cleaning
+var clean_recipe = W.phony_recipe(
+    "clean",
+    [],
+    [
+        // remove all the .o files and the targets
+        R("rm -f %(objs) %(TARGET_MAIN) %(TARGET_COMPRESSED)"),
+    ]
+)
+
+// 5. a phony recipe to cat all the source files together and scp that to example.com
+var upload_main_recipe = W.phony_recipe(
+    "upload_main",
+    [srcs],
+    [
+        // cat all the source files together and scp that to example.com
+        R("cat %(srcs) | ssh example.com 'cat > /tmp/hello.c'"),
+    ]
+)
+
+class Build {
+    recipes {
+        obj_recipes + [main_recipe, compressed_recipe, clean_recipe, upload_main_recipe]
+    }
+    default_recipe {
+        main_recipe
+    }
+}

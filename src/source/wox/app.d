@@ -11,7 +11,7 @@ import commandr;
 import wox.build_host;
 import wox.log;
 
-enum DEFAULT_BUILDFILE_NAME = "Woxfile";
+enum DEFAULT_BUILDFILE_NAME = "build.wox";
 
 int main(string[] args) {
 	// args before -- go to wox, args after -- go to the buildfile
