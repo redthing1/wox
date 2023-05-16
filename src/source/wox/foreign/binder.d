@@ -9,6 +9,7 @@ import wox.foreign.bind.w;
 WoxForeignContext wox_context;
 
 struct WoxForeignContext {
+    Logger log;
     string cwd;
     std.string.string[] args;
     string[string] env;
@@ -21,10 +22,7 @@ struct WoxForeignContext {
 }
 
 static class WoxBuildForeignBinder {
-    static Logger log;
-
-    static void initialize(Logger log, WoxForeignContext context) {
-        this.log = log;
+    static void initialize(WoxForeignContext context) {
         wox_context = context;
         wox_context.derive();
     }
@@ -34,7 +32,7 @@ static class WoxBuildForeignBinder {
         auto pretty_sig = format("%s::%s.%s",
             module_.to!string, className.to!string, signature.to!string);
 
-        log.info("[foreign binder] binding %s", pretty_sig);
+        wox_context.log.info("[foreign binder] binding %s", pretty_sig);
 
         auto wox_utils_bind = BindForeignW.bind(
             vm, module_.to!string, className.to!string, signature.to!string, isStatic
@@ -42,7 +40,7 @@ static class WoxBuildForeignBinder {
         if (wox_utils_bind !is null)
             return wox_utils_bind;
 
-        log.err("[foreign binder]   error: no binding found for %s", pretty_sig);
+        wox_context.log.err("[foreign binder]   error: no binding found for %s", pretty_sig);
 
         return null;
     }

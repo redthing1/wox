@@ -69,7 +69,7 @@ class BuildHost {
         config.errorFn = &wren_error;
 
         // bind foreign functions
-        WoxBuildForeignBinder.initialize(log, WoxForeignContext(cwd, args, env));
+        WoxBuildForeignBinder.initialize(WoxForeignContext(log, cwd, args, env));
         config.bindForeignMethodFn = &WoxBuildForeignBinder.bindForeignMethod;
 
         // create vm

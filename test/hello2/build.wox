@@ -4,7 +4,7 @@ var TARGET_MAIN = "hello"
 var TARGET_COMPRESSED = "hello.zst"
 
 // args
-System.print("running build with args: %(W.cliopts())")
+W.log_inf("running build with args: %(W.cliopts())")
 var debug = W.cliopt_bool("-g", false)
 var opt_level = W.cliopt_int("-O", 2)
 var cc = W.cliopt("-cc", "gcc")

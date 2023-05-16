@@ -37,6 +37,14 @@ struct BindForeignW {
                 return &W.path_basename;
             case "path_extname(_)":
                 return &W.path_extname;
+            case "log_err(_)":
+                return &W.log_err;
+            case "log_wrn(_)":
+                return &W.log_wrn;
+            case "log_inf(_)":
+                return &W.log_inf;
+            case "log_trc(_)":
+                return &W.log_trc;
             default:
                 enforce(0, format("failed to bind unknown method %s.%s", className, signature));
                 assert(0);
@@ -191,6 +199,35 @@ struct BindForeignW {
             auto result = std.path.extension(path);
 
             wrenSetSlotString(vm, 0, result.toStringz);
+        }
+
+        // foreign static log_err(msg)                         // log err msg
+        // foreign static log_wrn(msg)                         // log warn msg
+        // foreign static log_inf(msg)                         // log info msg
+        // foreign static log_trc(msg)                         // log trace msg
+
+        // log_err(msg)
+        static void log_err(WrenVM* vm) {
+            auto msg = wrenGetSlotString(vm, 1).to!string;
+            wox_context.log.err(msg);
+        }
+
+        // log_wrn(msg)
+        static void log_wrn(WrenVM* vm) {
+            auto msg = wrenGetSlotString(vm, 1).to!string;
+            wox_context.log.wrn(msg);
+        }
+
+        // log_inf(msg)
+        static void log_inf(WrenVM* vm) {
+            auto msg = wrenGetSlotString(vm, 1).to!string;
+            wox_context.log.inf(msg);
+        }
+
+        // log_trc(msg)
+        static void log_trc(WrenVM* vm) {
+            auto msg = wrenGetSlotString(vm, 1).to!string;
+            wox_context.log.trc(msg);
         }
     }
 }

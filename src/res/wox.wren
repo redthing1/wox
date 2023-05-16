@@ -18,6 +18,12 @@ class W {
     foreign static path_dirname(path)                   // dirname of path
     foreign static path_basename(path)                  // basename of path
     foreign static path_extname(path)                   // extname of path
+
+    // logging
+    foreign static log_err(msg)                         // log err msg
+    foreign static log_wrn(msg)                         // log warn msg
+    foreign static log_inf(msg)                         // log info msg
+    foreign static log_trc(msg)                         // log trace msg
 }
 
 // models
