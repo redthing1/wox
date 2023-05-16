@@ -1,4 +1,4 @@
-// import "meta" for Meta
+import "meta" for Meta
 
 // general wox utils
 class W {
