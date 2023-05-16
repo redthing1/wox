@@ -30,6 +30,7 @@ class BuildHost {
     struct Options {
         int n_jobs = 1;
         string graphviz_file = null;
+        bool enable_cache = false;
     }
 
     Options options;
@@ -68,6 +69,22 @@ class BuildHost {
         }
     }
 
+    extern (C) static WrenLoadModuleResult wren_load_module(WrenVM* vm, const(char)* name) {
+        log.trace("loading module %s", name.to!string);
+        auto module_base_path = name.to!string.replace(".", "/");
+        static immutable possible_extensions = ["", ".wren", ".wox"];
+        // find a matching file
+        auto module_path = possible_extensions.map!(ext => module_base_path ~ ext)
+            .find!(p => std.file.exists(p));
+        if (module_path.empty) {
+            log.err("failed to find module %s", name.to!string);
+            return WrenLoadModuleResult(null);
+        }
+        auto module_source = std.file.readText(module_path.front);
+
+        return WrenLoadModuleResult(module_source.toStringz);
+    }
+
     bool build(string buildscript, string[] requested_targets, string cwd, string[] args, string[string] env) {
         log.trace("buildscript:\n%s", buildscript);
 
@@ -86,6 +103,9 @@ class BuildHost {
         // bind foreign functions
         WoxBuildForeignBinder.initialize(WoxForeignContext(log, cwd, args, env));
         config.bindForeignMethodFn = &WoxBuildForeignBinder.bindForeignMethod;
+
+        // import handler
+        config.loadModuleFn = &wren_load_module;
 
         // create vm
         WrenVM* vm = wrenNewVM(&config);
