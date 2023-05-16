@@ -243,14 +243,20 @@ class BuildHost {
                 log.dbg(" skipping virtual footprint %s", node.footprint);
                 continue;
             }
-            log.trace(" building %s with recipe '%s' <- %s", node.footprint, node.recipe.name, node.recipe.inputs);
+            log.trace(" building %s with recipe '%s' <- %s",
+                node.footprint, node.recipe.name, node.recipe.inputs);
 
             auto recipe = node.recipe;
             foreach (step; recipe.steps) {
                 log.trace("  executing step %s", step);
+                auto step_result = execute_step(step);
             }
         }
 
+        return true;
+    }
+
+    bool execute_step(CommandStep step) {
         return true;
     }
 
