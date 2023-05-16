@@ -376,7 +376,8 @@ class BuildHost {
         try {
             auto command_result = executeShell(step.cmd);
             if (command_result.status != 0) {
-                log.err("error executing shell command: `%s`: %s", step.cmd, command_result);
+                // log.err("error executing shell command: `%s`: %s", step.cmd, command_result);
+                log.err("error executing shell command: `%s`:\n%s", step.cmd, command_result.output);
                 return false;
             }
             return true;
