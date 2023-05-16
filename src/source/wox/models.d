@@ -10,7 +10,8 @@ struct Footprint {
     enum Reality {
         Unknown,
         File,
-        Virtual
+        Virtual,
+        Any
     }
 
     string name;
@@ -48,9 +49,21 @@ struct Recipe {
     }
 
     bool can_build_target(string target) const {
+        return can_build_footprint(Footprint(target, Footprint.Reality.Any));
+    }
+
+    bool can_build_footprint(Footprint footprint) const {
         foreach (output; outputs) {
-            if (output.name == target) {
-                return true;
+            if (output.name == footprint.name) {
+                // we found a matching name, check if the reality matches
+                // if the reality is any, then yeah sure
+                if (output.reality == Footprint.Reality.Any) {
+                    return true;
+                }
+                // otherwise, check if the realities match
+                if (output.reality == footprint.reality) {
+                    return true;
+                }
             }
         }
         return false;

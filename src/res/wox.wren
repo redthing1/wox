@@ -40,12 +40,23 @@ class W {
     // foreign static recipe(name, inputs, outputs, steps)     // named recipe
     // foreign static virtual_recipe(name, inputs, steps)      // virtual recipe
 
-    static recipe(inputs, outputs, steps) {
-        return Recipe.new(null, as_footprints_(inputs), as_footprints_(outputs), steps)
-    }
+    // static recipe(inputs, outputs, steps) {
+    //     return recipe(null, inputs, outputs, steps)
+    // }
 
     static recipe(name, inputs, outputs, steps) {
-        return Recipe.new(name, as_footprints_(inputs), as_footprints_(outputs), steps)
+        var footprint_inputs = as_footprints_(inputs)
+        var footprint_outputs = as_footprints_(outputs)
+
+        // add implicit virtual output for the recipe name
+        footprint_outputs.add(Footprint.new(name, FootprintReality.virtual))
+
+        return Recipe.new(
+            name,
+            footprint_inputs,
+            footprint_outputs,
+            steps
+        )
     }
 
     static virtual_recipe(name, inputs, steps) {
@@ -55,6 +66,21 @@ class W {
             as_footprints_(inputs),
             as_footprints_([virtual_output], FootprintReality.virtual),
             steps
+        )
+    }
+
+    static meta_recipe(name, input_recipes) {
+        // inputs will be other recipes, and thus virtual
+        var input_targets = []
+        for (input_recipe in input_recipes) {
+            input_targets.add(input_recipe.name)
+        }
+        var virtual_output = name
+        return Recipe.new(
+            name,
+            as_footprints_(input_targets, FootprintReality.virtual),
+            as_footprints_([virtual_output], FootprintReality.virtual),
+            []
         )
     }
 

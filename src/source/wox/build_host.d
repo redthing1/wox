@@ -10,6 +10,8 @@ import std.array;
 import core.stdc.stdio;
 import core.stdc.string;
 import std.exception : enforce;
+import std.typecons;
+import std.container.dlist;
 import wren;
 
 import wox.log;
@@ -17,6 +19,7 @@ import wox.models;
 import wox.wren_integration;
 import wox.foreign.binder;
 import wox.wren_utils;
+import wox.solver;
 
 class BuildHost {
     static Logger log;
@@ -166,13 +169,121 @@ class BuildHost {
             candidate_recipes = [default_recipe];
         }
 
+        // attempt to resolve the recipes, because some still have footprints with unknown realities
+        resolve_recipes(all_recipes);
+
+        // dump resolved recipes
+        foreach (recipe; all_recipes) {
+            log.trace("resolved recipe:\n%s", recipe);
+        }
+
         // build the recipes
-        auto result = build_recipes(candidate_recipes);
+        auto result = build_recipes(candidate_recipes, all_recipes);
 
         return result;
     }
 
-    bool build_recipes(Recipe[] recipes) {
+    void resolve_recipes(Recipe[] recipes) {
+        log.trace("resolving recipes");
+
+        void ensure_footprint_reality(Footprint* fp) {
+            // if it's of unknown reality, try to resolve it
+            if (fp.reality == Footprint.Reality.Unknown) {
+                log.trace("  resolving %s", *fp);
+                // unknown reality means we don't know if it's a file or virtual
+                // so we check if it's a file using some heuristics
+
+                if (std.file.exists(fp.name)) { // is it a real file?
+                    fp.reality = Footprint.Reality.File;
+                    log.trace("   %s is a file", *fp);
+                } else if (fp.name.startsWith(".")) { // is it a relative path?
+                    fp.reality = Footprint.Reality.File;
+                    log.trace("   %s is probably a file", *fp);
+                } else if (fp.name.canFind("/") || fp.name.canFind(".")) { // is it a path?
+                    fp.reality = Footprint.Reality.File;
+                    log.trace("   %s is probably a file", *fp);
+                } else {
+                    fp.reality = Footprint.Reality.Virtual;
+                    log.trace("   assuming %s is virtual", *fp);
+                }
+            }
+        }
+
+        foreach (recipe; recipes) {
+            log.trace(" resolving recipe '%s'", recipe.name);
+            for (auto i = 0; i < recipe.inputs.length; i++) {
+                auto input = &recipe.inputs[i];
+                ensure_footprint_reality(input);
+            }
+            for (auto i = 0; i < recipe.outputs.length; i++) {
+                auto output = &recipe.outputs[i];
+                ensure_footprint_reality(output);
+            }
+        }
+    }
+
+    bool build_recipes(Recipe[] goal_recipes, Recipe[] all_recipes) {
+        // create a solver graph
+        log.trace("creating solver graph");
+        auto graph = new SolverGraph();
+
+        Recipe find_recipe_to_build(Footprint footprint) {
+            // find a recipe that says it can build this footprint
+            foreach (recipe; all_recipes) {
+                log.trace("  checking if recipe '%s' can build footprint %s", recipe.name, footprint);
+                if (recipe.can_build_footprint(footprint)) {
+                    log.trace("   recipe '%s' can build footprint %s", recipe.name, footprint);
+                    return recipe;
+                }
+            }
+            enforce(false, format("no recipe found that can build footprint %s", footprint));
+            assert(0);
+        }
+
+        Footprint[] get_dependencies(Recipe recipe) {
+            // get the immediate dependencies of this recipe
+            return recipe.inputs;
+        }
+
+        log.trace(" adding target recipes to solver graph");
+
+        auto recipe_queue = DList!Recipe();
+        bool[Recipe] visited_recipes;
+
+        foreach (recipe; goal_recipes) {
+            recipe_queue.insertBack(recipe);
+        }
+
+        while (!recipe_queue.empty) {
+            auto recipe = recipe_queue.front;
+            recipe_queue.removeFront;
+
+            visited_recipes[recipe] = true;
+
+            // process this recipe
+            log.trace("processing recipe '%s'", recipe.name);
+
+            // add dependencies to the queue
+            foreach (dep; get_dependencies(recipe)) {
+                // first, check if the footprint is a file that exists
+                if (dep.reality == Footprint.Reality.File && std.file.exists(dep.name)) {
+                    log.trace("  using file %s", dep);
+                    // this is a real file, which is a terminal
+                    continue;
+                }
+                // find a recipe that can build this dependency
+                auto dep_recipe = find_recipe_to_build(dep);
+
+                if (dep_recipe in visited_recipes) {
+                    // we've already visited this recipe, so we don't need to add it to the queue
+                    log.dbg("  already visited dependency recipe '%s'", dep_recipe.name);
+                    continue;
+                }
+
+                // add it to the queue
+                recipe_queue.insertBack(dep_recipe);
+            }
+        }
 
         return true;
     }

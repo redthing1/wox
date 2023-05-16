@@ -1,7 +1,7 @@
 import "wox" for W, R
 
-var TARGET_MAIN = "hello"
-var TARGET_COMPRESSED = "hello.zst"
+var TARGET_MAIN = "./hello"
+var TARGET_COMPRESSED = "./hello.zst"
 
 // args
 W.log_inf("running build with args: %(W.cliopts())")
@@ -39,6 +39,7 @@ for (src_ix in 0...srcs.count) {
     var o_file = objs[src_ix]
 
     var obj_recipe = W.recipe(
+        o_file,
         [c_file],
         [o_file],
         [
@@ -51,6 +52,7 @@ for (src_ix in 0...srcs.count) {
 
 // 2. a recipe for the main target
 var main_recipe = W.recipe(
+    "main",
     objs,
     [TARGET_MAIN],
     [
@@ -61,6 +63,7 @@ var main_recipe = W.recipe(
 
 // 3. a recipe for the compressed target
 var compressed_recipe = W.recipe(
+    "compressed",
     [TARGET_MAIN],
     [TARGET_COMPRESSED],
     [
@@ -89,8 +92,14 @@ var upload_main_recipe = W.virtual_recipe(
     ]
 )
 
+// 6. a default all recipe
+var all_recipe = W.meta_recipe(
+    "all",
+    [main_recipe, compressed_recipe]
+)
+
 var BUILD_RECIPES = obj_recipes + [main_recipe, compressed_recipe, clean_recipe, upload_main_recipe]
-var DEFAULT_RECIPE = main_recipe
+var DEFAULT_RECIPE = all_recipe
 
 class Build {
     static recipes { BUILD_RECIPES }
