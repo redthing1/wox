@@ -75,7 +75,7 @@ struct ModelsFromWren {
     // convert models from wren handles
     import wren;
     import wox.host.meta;
-    import wox.wren_utils;
+    import wox.wren;
 
     static Recipe convert_recipe_from_wren(WrenVM* vm, WrenHandle* recipe_h) {
         Recipe ret;

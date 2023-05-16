@@ -3,7 +3,7 @@ module wox.foreign.bind.w;
 import wox.log;
 import wox.foreign.imports;
 import wox.foreign.binder;
-import wox.foreign.utils;
+import wox.foreign.common;
 
 struct BindForeignW {
     static WrenForeignMethodFn bind(
@@ -129,7 +129,7 @@ struct BindForeignW {
                 .replace("?", ".")
                 .replace("*", ".*");
             auto regex_str = format("^%s$", regex_like_pattern);
-            auto matching_files = Utils.recursive_listdir_matching(".", regex_str);
+            auto matching_files = ForeignCommon.recursive_listdir_matching(".", regex_str);
 
             WrenUtils.wren_write_string_list(vm, 0, matching_files, 1);
         }
@@ -273,7 +273,7 @@ struct BindForeignW {
         static void shell(WrenVM* vm) {
             auto cmd = wrenGetSlotString(vm, 1).to!string;
 
-            auto result = Utils.shell_execute(cmd);
+            auto result = ForeignCommon.shell_execute(cmd);
             if (result !is null) {
                 wrenSetSlotString(vm, 0, result.toStringz);
             } else {

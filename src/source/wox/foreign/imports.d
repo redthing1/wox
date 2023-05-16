@@ -14,5 +14,5 @@ public {
 
     import wren;
 
-    import wox.wren_utils;
+    import wox.wren;
 }

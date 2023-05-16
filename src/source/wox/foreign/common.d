@@ -1,12 +1,11 @@
-module wox.foreign.utils;
+module wox.foreign.common;
 
 import std.regex;
 
 import wox.foreign.imports;
 import wox.foreign.binder;
-import wox.foreign.utils;
 
-static struct Utils {
+static struct ForeignCommon {
     static string[] listdir(string path, bool recursive) {
         import std.algorithm.iteration : map, filter;
         import std.array : array;

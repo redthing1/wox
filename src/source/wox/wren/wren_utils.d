@@ -1,4 +1,4 @@
-module wox.wren_utils;
+module wox.wren.wren_utils;
 
 import std.string;
 import std.array;
