@@ -12,7 +12,5 @@ public {
     import core.stdc.stdlib;
     import std.exception: enforce;
 
-    import wren.compiler;
-    import wren.vm;
-    import wren.common;
+    import wren;
 }

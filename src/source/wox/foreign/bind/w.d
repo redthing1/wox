@@ -60,7 +60,7 @@ struct BindForeignW {
         return null;
     }
 
-    struct W {
+    extern(C) struct W {
         // cliopts() -> list[string]
         static void cliopts(WrenVM* vm) {
             Utils.wren_write_string_list(vm, 0, wox_context.args, 1);

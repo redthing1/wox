@@ -4,10 +4,10 @@
 		"bc-string": "1.3.3",
 		"colorize": "1.0.5",
 		"commandr": "0.2.0",
+		"dwren": "0.2.2",
 		"mir-linux-kernel": "1.0.1",
 		"pegged": "0.4.8",
 		"silly": "1.1.1",
-		"wren-port": {"path":"../lib/wren-port"},
 		"zased": "0.1.1"
 	}
 }

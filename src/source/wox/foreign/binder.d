@@ -27,12 +27,12 @@ static class WoxBuildForeignBinder {
         wox_context.derive();
     }
 
-    static WrenForeignMethodFn bindForeignMethod(WrenVM* vm, const(char)* module_,
+    extern (C) static WrenForeignMethodFn bindForeignMethod(WrenVM* vm, const(char)* module_,
         const(char)* className, bool isStatic, const(char)* signature) {
         auto pretty_sig = format("%s::%s.%s",
             module_.to!string, className.to!string, signature.to!string);
 
-        wox_context.log.trace("[foreign binder] binding %s", pretty_sig);
+        // wox_context.log.trace("[foreign binder] binding %s", pretty_sig);
 
         auto wox_utils_bind = BindForeignW.bind(
             vm, module_.to!string, className.to!string, signature.to!string, isStatic
@@ -40,7 +40,7 @@ static class WoxBuildForeignBinder {
         if (wox_utils_bind !is null)
             return wox_utils_bind;
 
-        wox_context.log.err("[foreign binder]   error: no binding found for %s", pretty_sig);
+        // wox_context.log.err("[foreign binder]   error: no binding found for %s", pretty_sig);
 
         return null;
     }

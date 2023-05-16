@@ -5,9 +5,7 @@ import std.file;
 import std.path;
 import std.conv;
 import std.string;
-import wren.compiler;
-import wren.vm;
-import wren.common;
+import wren;
 import core.stdc.stdio;
 import core.stdc.string;
 
@@ -26,11 +24,11 @@ class BuildHost {
         this.log = log;
     }
 
-    static void wren_write(WrenVM* vm, const(char)* text) {
+    extern (C) static void wren_write(WrenVM* vm, const(char)* text) {
         writef("%s", text.to!string);
     }
 
-    static void wren_error(
+    extern (C) static void wren_error(
         WrenVM* vm, WrenErrorType errorType, const(char)* module_, int line, const(char)* msg
     ) {
         switch (errorType) with (WrenErrorType) {
