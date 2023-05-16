@@ -45,6 +45,8 @@ struct BindForeignW {
                 return &W.log_inf;
             case "log_trc(_)":
                 return &W.log_trc;
+            case "log_dbg(_)":
+                return &W.log_dbg;
             default:
                 enforce(0, format("failed to bind unknown method %s.%s", className, signature));
                 assert(0);
@@ -228,6 +230,12 @@ struct BindForeignW {
         static void log_trc(WrenVM* vm) {
             auto msg = wrenGetSlotString(vm, 1).to!string;
             wox_context.log.trc(msg);
+        }
+
+        // log_dbg(msg)
+        static void log_dbg(WrenVM* vm) {
+            auto msg = wrenGetSlotString(vm, 1).to!string;
+            wox_context.log.dbg(msg);
         }
     }
 }

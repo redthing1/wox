@@ -24,6 +24,7 @@ class W {
     foreign static log_wrn(msg)                         // log warn msg
     foreign static log_inf(msg)                         // log info msg
     foreign static log_trc(msg)                         // log trace msg
+    foreign static log_dbg(msg)                         // log debug msg
 }
 
 // models

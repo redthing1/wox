@@ -32,7 +32,7 @@ static class WoxBuildForeignBinder {
         auto pretty_sig = format("%s::%s.%s",
             module_.to!string, className.to!string, signature.to!string);
 
-        wox_context.log.info("[foreign binder] binding %s", pretty_sig);
+        wox_context.log.trace("[foreign binder] binding %s", pretty_sig);
 
         auto wox_utils_bind = BindForeignW.bind(
             vm, module_.to!string, className.to!string, signature.to!string, isStatic
