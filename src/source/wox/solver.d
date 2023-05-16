@@ -18,13 +18,13 @@ class SolverGraph {
 }
 
 class SolverNode {
-    alias NodeData = Footprint;
-    NodeData data;
+    Footprint footprint;
+    Recipe recipe;
     SolverNode parent = null;
     SolverNode[] children;
 
-    this(NodeData data) {
-        this.data = data;
+    this(Footprint footprint) {
+        this.footprint = footprint;
     }
 
     @get is_leaf() {
@@ -32,6 +32,6 @@ class SolverNode {
     }
 
     override string toString() const {
-        return format("SolverNode(%s)", this.data);
+        return format("SolverNode(%s > '%s')", this.footprint, this.recipe.name);
     }
 }

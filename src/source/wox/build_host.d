@@ -230,6 +230,14 @@ class BuildHost {
     }
 
     bool build_recipes(Recipe[] goal_recipes, Recipe[] all_recipes) {
+        auto solver_graph = build_solver_graph(goal_recipes, all_recipes);
+
+
+
+        return true;
+    }
+
+    SolverGraph build_solver_graph(Recipe[] goal_recipes, Recipe[] all_recipes) {
         // create a solver graph
         log.trace("creating solver graph");
         auto graph = new SolverGraph();
@@ -297,10 +305,7 @@ class BuildHost {
             // add graph nodes for the outputs
             SolverNode[] curr_nodes;
             foreach (output; walk.recipe.outputs) {
-                // log.trace("  adding node for output %s", output);
-                // auto output_node = new SolverNode(output);
-
-                // see if a node for this output already exists
+                // find or create node for this output footprint
                 SolverNode output_node = null;
                 if (output in nodes_for_footprints) {
                     // use existing node
@@ -309,6 +314,7 @@ class BuildHost {
                 } else {
                     // create a new node for this output
                     output_node = new SolverNode(output);
+                    output_node.recipe = walk.recipe;
                     log.trace("  created node for output %s", output);
                     nodes_for_footprints[output] = output_node;
                 }
@@ -360,7 +366,7 @@ class BuildHost {
             dump_solver_graph(graph, options.graphviz_file);
         }
 
-        return true;
+        return graph;
     }
 
     void dump_solver_graph(SolverGraph graph, string filename) {
@@ -388,7 +394,7 @@ class BuildHost {
 
             // add this node to the graph
             // log.dbg(" gv node %s", node);
-            auto reality = node.data.reality;
+            auto reality = node.footprint.reality;
             auto node_style = ["shape": "box"];
             switch (reality) {
             case Footprint.Reality.File:
@@ -412,7 +418,7 @@ class BuildHost {
                 // log.dbg("  gv edge %s -> %s", node, child);
                 // gv.edge(node, child, ["style": "solid"]);
                 gv_builder ~= format("  \"%s\" -> \"%s\" [style=solid];\n", node, child);
-                
+
                 // if child is not visited, add it to the queue
                 if (child !in visited_nodes) {
                     node_stack.insertBack(child);
