@@ -231,10 +231,101 @@ class BuildHost {
 
     bool build_recipes(Recipe[] goal_recipes, Recipe[] all_recipes) {
         auto solver_graph = build_solver_graph(goal_recipes, all_recipes);
+        auto toposorted_nodes = toposort_solver_graph(solver_graph);
 
+        // now, we have a list of nodes
+        // they are ordered with the top-level targets first, so we can work backwards
 
+        log.trace("building recipes");
+        foreach (node; toposorted_nodes.reverse) {
+            // ignore any virtual footprints
+            if (node.footprint.reality == Footprint.Reality.Virtual) {
+                log.dbg(" skipping virtual footprint %s", node.footprint);
+                continue;
+            }
+            log.trace(" building %s with recipe '%s' <- %s", node.footprint, node.recipe.name, node.recipe.inputs);
+
+            auto recipe = node.recipe;
+            foreach (step; recipe.steps) {
+                log.trace("  executing step %s", step);
+            }
+        }
 
         return true;
+    }
+
+    SolverNode[] toposort_solver_graph(SolverGraph solver_graph) {
+        // topologically sort the graph iteratively using Kahn's algorithm
+        int[SolverNode] in_degree;
+
+        bool[SolverNode] visited;
+        auto queue = DList!(SolverNode)();
+        foreach (node; solver_graph.roots) {
+            in_degree[node] = 0;
+            queue.insertBack(node);
+        }
+
+        while (!queue.empty) {
+            auto node = queue.front;
+            queue.removeFront;
+
+            if (node in visited) {
+                continue;
+            }
+
+            visited[node] = true;
+
+            foreach (child; node.children) {
+                // update in-degree of the child
+                if (child !in in_degree) {
+                    in_degree[child] = 0;
+                }
+                in_degree[child] += 1;
+                if (child in visited) {
+                    continue;
+                }
+                queue.insertBack(child);
+            }
+        }
+
+        SolverNode[] sorted_nodes;
+        visited.clear();
+        queue.clear();
+        // queue the roots (they have in-degree 0)
+        foreach (node; solver_graph.roots) {
+            queue.insertBack(node);
+        }
+
+        while (!queue.empty) {
+            auto node = queue.front;
+            queue.removeFront;
+
+            if (node in visited) {
+                continue;
+            }
+
+            visited[node] = true;
+            sorted_nodes ~= node;
+
+            foreach (child; node.children) {
+                // update in-degree of the child
+                in_degree[child] -= 1;
+
+                // if in-degree becomes 0, add it to queue
+                if (in_degree[child] == 0) {
+                    queue.insertBack(child);
+                }
+            }
+        }
+        enforce(sorted_nodes.length == visited.length, "graph has a cycle");
+
+        // // print topologically sorted order
+        // log.trace("topologically sorted order:");
+        // foreach (node; sorted_nodes) {
+        //     log.trace(" %s", node);
+        // }
+
+        return sorted_nodes;
     }
 
     SolverGraph build_solver_graph(Recipe[] goal_recipes, Recipe[] all_recipes) {
