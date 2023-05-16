@@ -54,7 +54,7 @@ class BuildHost {
         }
     }
 
-    bool build(string buildscript, string[] targets, string cwd, string[] args, string[string] env) {
+    bool build(string buildscript, string[] requested_targets, string cwd, string[] args, string[string] env) {
         log.trace("buildscript:\n%s", buildscript);
 
         // vm info
@@ -131,6 +131,48 @@ class BuildHost {
         auto default_recipe = ModelsFromWren.convert_recipe_from_wren(vm, default_recipe_h);
         auto all_recipes = all_recipes_h
             .map!(x => ModelsFromWren.convert_recipe_from_wren(vm, x)).array;
+
+        foreach (recipe; all_recipes) {
+            log.trace("recipe:\n%s", recipe);
+        }
+
+        // make a list of recipes we want to build
+        // if any targets are specified, we use those
+        // but we have to ensure that we have recipes that know how to build them
+        // if no targets are specified, we use the default recipe
+        Recipe[] candidate_recipes;
+
+        if (requested_targets.length > 0) {
+            // ensure we have recipes for all the targets
+            foreach (target; requested_targets) {
+                log.trace("looking for recipe that can build target %s", target);
+                bool candidate_found = false;
+                foreach (recipe; all_recipes) {
+                    if (recipe.can_build_target(target)) {
+                        log.trace("found recipe that can build target %s: %s", target, recipe);
+                        candidate_recipes ~= recipe;
+                        candidate_found = true;
+                    }
+                }
+
+                if (!candidate_found) {
+                    log.err("no recipe found that can build target %s", target);
+                    return false;
+                }
+            }
+        } else {
+            // no targets were specifically requested, so we use the default recipe
+            log.trace("using default recipe: %s", default_recipe);
+            candidate_recipes = [default_recipe];
+        }
+
+        // build the recipes
+        auto result = build_recipes(candidate_recipes);
+
+        return result;
+    }
+
+    bool build_recipes(Recipe[] recipes) {
 
         return true;
     }

@@ -46,6 +46,15 @@ struct Recipe {
 
         return sb.data;
     }
+
+    bool can_build_target(string target) const {
+        foreach (output; outputs) {
+            if (output.name == target) {
+                return true;
+            }
+        }
+        return false;
+    }
 }
 
 struct ModelsFromWren {
@@ -108,7 +117,7 @@ struct ModelsFromWren {
             ret.steps ~= convert_step_from_wren(vm, step_h);
         }
 
-        writefln("converted recipe:\n%s", ret);
+        // writefln("converted recipe:\n%s", ret);
 
         return ret;
     }
