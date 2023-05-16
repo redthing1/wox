@@ -12,6 +12,7 @@ import core.stdc.string;
 import std.exception : enforce;
 import std.typecons;
 import std.container.dlist;
+import std.parallelism;
 import wren;
 
 import wox.log;
@@ -25,6 +26,7 @@ class BuildHost {
     static Logger log;
 
     struct Options {
+        int n_jobs = 1;
         string graphviz_file = null;
     }
 
@@ -245,20 +247,39 @@ class BuildHost {
 
     bool build_recipes(Recipe[] goal_recipes, Recipe[] all_recipes) {
         auto solver_graph = build_solver_graph(goal_recipes, all_recipes);
-        auto toposorted_nodes = toposort_solver_graph(solver_graph);
+        auto raw_toposorted_nodes = toposort_solver_graph(solver_graph);
+
+        auto toposorted_queue = raw_toposorted_nodes.reverse;
 
         // now, we have a list of nodes
         // they are ordered with the top-level targets first, so we can work backwards
 
-        log.trace("executing solved recipes");
-        bool[Recipe] visited_recipes;
-        foreach (node; toposorted_nodes.reverse) {
-            if (node.recipe in visited_recipes) {
-                continue;
+        // auto task_pool = new TaskPool(options.n_jobs);
+        // defaultPoolThreads = options.n_jobs;
+        shared bool[Recipe] visited_recipes;
+
+        log.trace("executing solved recipes with %s jobs", options.n_jobs);
+
+        // foreach (node; parallel(toposorted_queue)) {
+        foreach (node; toposorted_queue) {
+            auto recipe = node.recipe;
+            // auto worker_ix = task_pool.workerIndex();
+            auto worker_ix = 0;
+
+            synchronized {
+                if (node.recipe in visited_recipes) {
+                    continue;
+                }
+
+                visited_recipes[recipe] = true;
             }
 
-            log.trace(" maybe build %s with recipe '%s' <- %s",
-                node.recipe.outputs, node.recipe.name, node.recipe.inputs);
+            synchronized {
+                log.trace(" [%s] maybe build %s with recipe '%s' <- %s",
+                    worker_ix,
+                    node.recipe.outputs, node.recipe.name, node.recipe.inputs
+                );
+            }
 
             auto file_inputs = node.recipe.inputs
                 .filter!(x => x.reality == Footprint.Reality.File).array;
@@ -277,7 +298,8 @@ class BuildHost {
                 .map!(x => std.file.timeLastModified(x.name).toUnixTime);
 
             // if all output files also exist, we can check their modtimes
-            bool all_outputs_exist = file_outputs.length > 0 && file_outputs.all!(x => std.file.exists(x.name));
+            bool all_outputs_exist = file_outputs.length > 0 && file_outputs.all!(
+                x => std.file.exists(x.name));
 
             if (all_outputs_exist) {
                 // get modtimes of all file outputs
@@ -294,8 +316,6 @@ class BuildHost {
                 }
             }
 
-            auto recipe = node.recipe;
-            visited_recipes[recipe] = true;
             foreach (step; recipe.steps) {
                 log.trace("  executing step %s", step);
                 auto step_result = execute_step(step);
