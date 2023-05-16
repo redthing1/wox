@@ -135,39 +135,11 @@ class WoxBuilder {
             return false;
         }
 
-        // ensure enough slots for what we're going to do
-        wrenEnsureSlots(vm, 2);
-        // get the Build static class that should have been declared in the buildscript
-        auto build_decl_slot = 0;
-        wrenGetVariable(vm, BUILDSCRIPT_MODULE.toStringz, "Build", build_decl_slot);
-        auto build_class_h = wrenGetSlotHandle(vm, build_decl_slot);
-        if (build_class_h == null) {
-            log.err("failed to get build instance handle from %s", BUILDSCRIPT_MODULE);
-            return false;
-        }
+        auto wren_ext = new WrenExt(vm);
 
-        // get the data exposed by the Build declaration
-        // call Build.default_recipe static getter
-        wrenSetSlotHandle(vm, 0, build_class_h);
-        auto default_recipe_call_h = wrenMakeCallHandle(vm, "default_recipe");
-        auto default_recipe_call_result = wrenCall(vm, default_recipe_call_h);
-        if (default_recipe_call_result != WREN_RESULT_SUCCESS) {
-            log.err("failed to call Build.default_recipe: %s", default_recipe_call_result);
-            return false;
-        }
-        enforce(wrenGetSlotType(vm, 0) == WREN_TYPE_STRING, "default recipe is not a string");
-        auto default_recipe_name = wrenGetSlotString(vm, 0).to!string;
-
-        // call Build.recipes static getter to get the list of all recipes
-        wrenSetSlotHandle(vm, 0, build_class_h);
-        auto recipes_call_h = wrenMakeCallHandle(vm, "recipes");
-        auto recipes_call_result = wrenCall(vm, recipes_call_h);
-        if (recipes_call_result != WREN_RESULT_SUCCESS) {
-            log.err("failed to call Build.recipes: %s", recipes_call_result);
-            return false;
-        }
-        // slot 0 contains a list of recipe objects
-        auto all_recipes_h = WrenUtils.wren_read_handle_list(vm, 0, 1);
+        auto build_class_h = wren_ext.get_global_var_handle(BUILDSCRIPT_MODULE, "Build");
+        auto default_recipe_name = wren_ext.call_prop_string(build_class_h, "default_recipe");
+        auto all_recipes_h = wren_ext.call_prop_handle_list(build_class_h, "recipes");
 
         auto models_converter = ModelsFromWrenConverter(vm);
 

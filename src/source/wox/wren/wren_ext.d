@@ -32,7 +32,9 @@ struct WrenExt {
         wrenEnsureSlots(vm, 1);
         wrenGetVariable(vm, module_name.toStringz, var_name.toStringz, 0);
         // make a handle and return it
-        return wrenGetSlotHandle(vm, 0);
+        auto slot_handle = wrenGetSlotHandle(vm, 0);
+        enforce(slot_handle != null, "slot handle is null");
+        return slot_handle;
     }
 
     void get_ret_handle(WrenHandle* handle) {
