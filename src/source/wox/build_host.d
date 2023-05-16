@@ -256,8 +256,9 @@ class BuildHost {
         // now, we have a list of nodes
         // they are ordered with the top-level targets first, so we can work backwards
 
-        // auto task_pool = new TaskPool(options.n_jobs);
-        defaultPoolThreads = options.n_jobs;
+        auto use_single_thread = options.n_jobs == 1;
+        auto task_pool = new TaskPool(options.n_jobs);
+        // defaultPoolThreads = options.n_jobs;
         shared bool[Recipe] visited_recipes;
 
         log.trace("executing solved recipes with %s jobs", options.n_jobs);
@@ -269,23 +270,28 @@ class BuildHost {
             }
             visited_recipes[node.recipe] = true;
 
-            // auto result = execute_node_recipe(node);
-            // if (!result) {
-            //     return false;
-            // }
-
-            auto execute_task = task(&execute_node_recipe, node, log);
-            taskPool.put(execute_task);
+            if (use_single_thread) {
+                auto result = execute_node_recipe(task_pool, node, log);
+                if (!result) {
+                    return false;
+                }
+            } else {
+                // queue on the task pool
+                auto execute_task = task(&execute_node_recipe, task_pool, node, log);
+                task_pool.put(execute_task);
+            }
         }
+
+        task_pool.finish(true);
 
         return true;
     }
 
-    bool execute_node_recipe(SolverNode node, Logger log) {
+    bool execute_node_recipe(TaskPool pool, SolverNode node, Logger log) {
         auto recipe = node.recipe;
         // logger needs to be passed when multithreading
 
-        auto worker_ix = taskPool.workerIndex;
+        auto worker_ix = pool.workerIndex;
         synchronized {
             log.trace(" [%s] maybe build %s with recipe '%s' <- %s",
                 worker_ix,
