@@ -44,7 +44,7 @@ for (src_ix in 0...srcs.count) {
         [o_file],
         [
             // run gcc to compile a single .c file into a .o file
-            R.c("%(cc) %(cflags) -c %(c_file) -o %(o_file)"),
+            R.c("%(cc) %(W.join(cflags)) -c %(c_file) -o %(o_file)"),
         ]
     )
     obj_recipes.add(obj_recipe)
