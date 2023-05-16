@@ -463,7 +463,9 @@ class BuildHost {
         try {
             if (!step.is_quiet) {
                 log.source = "cmd";
-                log.info("%s", step.cmd);
+                synchronized {
+                    log.info("%s", step.cmd);
+                }
             }
             auto command_result = executeShell(step.cmd);
             if (command_result.status != 0) {
