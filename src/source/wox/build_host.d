@@ -257,26 +257,12 @@ class BuildHost {
         // they are ordered with the top-level targets first, so we can work backwards
 
         // auto task_pool = new TaskPool(options.n_jobs);
-        defaultPoolThreads = options.n_jobs;
         shared bool[Recipe] visited_recipes;
 
-        log.trace("executing solved recipes with %s jobs", options.n_jobs);
+        // defaultPoolThreads = options.n_jobs;
+        // log.trace("executing solved recipes with %s jobs", options.n_jobs);
 
-        // foreach (i, ref node; parallel(toposorted_queue)) {
-        //     shared bool already_visited = false;
-        //     synchronized {
-        //         already_visited = (node.recipe in visited_recipes) !is null;
-        //     }
-        //     if (!already_visited) {
-        //         synchronized {
-        //             visited_recipes[node.recipe] = true;
-        //         }
-        //         auto result = execute_node_recipe(node);
-        //         if (!result) {
-        //             return false;
-        //         }
-        //     }
-        // }
+        log.trace("executing solved recipes");
 
         foreach (i, ref node; toposorted_queue) {
             if (node.recipe in visited_recipes) {
