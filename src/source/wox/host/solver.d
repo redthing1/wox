@@ -8,6 +8,8 @@ import std.typecons;
 import std.file;
 import std.container.dlist;
 import std.exception : enforce;
+import std.sumtype;
+import typetips;
 
 import wox.log;
 import wox.models;
@@ -33,7 +35,7 @@ class WoxSolver {
             this.footprint = footprint;
         }
 
-        @get is_leaf() {
+        @property bool is_leaf() {
             return this.children.length == 0;
         }
 
@@ -43,9 +45,13 @@ class WoxSolver {
     }
 
     Logger log;
+    Recipe[] goal_recipes;
+    Recipe[] all_recipes;
 
-    this(Logger log) {
+    this(Logger log, Recipe[] goal_recipes, Recipe[] all_recipes) {
         this.log = log;
+        this.goal_recipes = goal_recipes;
+        this.all_recipes = all_recipes;
     }
 
     Node[] toposort_graph(Graph solver_graph) {
@@ -124,23 +130,34 @@ class WoxSolver {
         return sorted_nodes;
     }
 
-    Graph build_graph(Recipe[] goal_recipes, Recipe[] all_recipes) {
+    struct RealFile {
+        Footprint footprint;
+    }
+
+    alias WayToBuild = SumTypeExt!(SumType!(RealFile, Recipe));
+
+    Optional!(WayToBuild.Sum) find_way_to_build(Footprint footprint) {
+        // find a recipe that says it can build this footprint
+        log.trace(" finding recipe to build footprint %s", footprint);
+        foreach (recipe; all_recipes) {
+            // log.trace("  checking if recipe '%s' can build footprint %s", recipe.name, footprint);
+            if (recipe.can_build_footprint(footprint)) {
+                log.trace("   recipe '%s' can build footprint %s", recipe.name, footprint);
+                return WayToBuild.maybe_wrap(some(recipe));
+            }
+        }
+        // no recipe could build the footprint
+        // see if it's a real file that exists
+        if (footprint.reality == Footprint.Reality.File && std.file.exists(footprint.name)) {
+            return WayToBuild.maybe_wrap(some(RealFile(footprint)));
+        }
+        return no!(WayToBuild.Sum);
+    }
+
+    Graph build_graph() {
         // create a solver graph
         log.trace("creating solver graph");
         auto graph = new Graph();
-
-        Nullable!Recipe find_recipe_to_build(Footprint footprint) {
-            // find a recipe that says it can build this footprint
-            log.trace(" finding recipe to build footprint %s", footprint);
-            foreach (recipe; all_recipes) {
-                // log.trace("  checking if recipe '%s' can build footprint %s", recipe.name, footprint);
-                if (recipe.can_build_footprint(footprint)) {
-                    log.trace("   recipe '%s' can build footprint %s", recipe.name, footprint);
-                    return Nullable!Recipe(recipe);
-                }
-            }
-            return Nullable!Recipe.init;
-        }
 
         Footprint[] get_dependencies(Recipe recipe) {
             // get the immediate dependencies of this recipe
@@ -224,21 +241,24 @@ class WoxSolver {
 
             // add dependencies to the queue (from our inputs)
             foreach (dep; get_dependencies(walk.recipe)) {
-                // find a recipe that can build this dependency
-                auto maybe_dep_recipe = find_recipe_to_build(dep);
-                if (maybe_dep_recipe.isNull) {
-                    // couldn't find a recipe that can build this dependency
-                    // see if it's a real file that exists
-                    if (dep.reality == Footprint.Reality.File && std.file.exists(dep.name)) {
-                        log.trace("  using real file %s", dep);
-                        // this is a real file, which is a terminal
-                        continue;
-                    }
-                    // otherwise, we don't know how to build this dependency
-                    enforce(false, format("no recipe found that can build footprint %s", dep));
+                // find a way to build this dependency
+                auto maybe_way_to_build = find_way_to_build(dep);
+                if (!maybe_way_to_build.any) {
+                    enforce(false, format("can't find a way to build footprint %s", dep));
                     assert(0);
                 }
-                auto dep_walk = RecipeWalk(maybe_dep_recipe.get, Nullable!Recipe(walk.recipe), curr_nodes);
+                auto way_to_build = maybe_way_to_build.get;
+
+                // if the way to build is a file, it is terminal
+                if (WayToBuild.holds!RealFile(way_to_build)) {
+                    log.trace("  using real file %s", dep);
+                    continue;
+                }
+
+                // otherwise, way to build is a recipe
+                enforce(WayToBuild.holds!Recipe(way_to_build), "way to build was expected to be a recipe");
+                auto way_to_build_recipe = WayToBuild.unwrap!Recipe(way_to_build);
+                auto dep_walk = RecipeWalk(way_to_build_recipe, Nullable!Recipe(walk.recipe), curr_nodes);
 
                 if (dep_walk in visited_walks) {
                     // we've already visited this walk, so we don't need to add it to the queue

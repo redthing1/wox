@@ -282,8 +282,8 @@ class WoxBuilder {
 
     bool build_recipes(Recipe[] goal_recipes, Recipe[] all_recipes) {
         // build a graph of the recipes
-        auto solver = new WoxSolver(log);
-        auto solver_graph = solver.build_graph(goal_recipes, all_recipes);
+        auto solver = new WoxSolver(log, goal_recipes, all_recipes);
+        auto solver_graph = solver.build_graph();
 
         if (options.graphviz_file !is null) {
             log.trace("dumping solver graph to %s", options.graphviz_file);
