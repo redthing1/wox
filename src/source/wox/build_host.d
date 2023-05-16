@@ -433,18 +433,19 @@ class BuildHost {
         log.trace("creating solver graph");
         auto graph = new SolverGraph();
 
-        Recipe find_recipe_to_build(Footprint footprint) {
+        Nullable!Recipe find_recipe_to_build(Footprint footprint) {
             // find a recipe that says it can build this footprint
             log.trace(" finding recipe to build footprint %s", footprint);
             foreach (recipe; all_recipes) {
                 // log.trace("  checking if recipe '%s' can build footprint %s", recipe.name, footprint);
                 if (recipe.can_build_footprint(footprint)) {
                     log.trace("   recipe '%s' can build footprint %s", recipe.name, footprint);
-                    return recipe;
+                    return Nullable!Recipe(recipe);
                 }
             }
-            enforce(false, format("no recipe found that can build footprint %s", footprint));
-            assert(0);
+            // enforce(false, format("no recipe found that can build footprint %s", footprint));
+            // assert(0);
+            return Nullable!Recipe.init;
         }
 
         Footprint[] get_dependencies(Recipe recipe) {
@@ -529,15 +530,21 @@ class BuildHost {
 
             // add dependencies to the queue (from our inputs)
             foreach (dep; get_dependencies(walk.recipe)) {
-                // first, check if the footprint is a file that exists
-                if (dep.reality == Footprint.Reality.File && std.file.exists(dep.name)) {
-                    log.trace("  using file %s", dep);
-                    // this is a real file, which is a terminal
-                    continue;
-                }
                 // find a recipe that can build this dependency
-                auto dep_recipe = find_recipe_to_build(dep);
-                auto dep_walk = RecipeWalk(dep_recipe, Nullable!Recipe(walk.recipe), curr_nodes);
+                auto maybe_dep_recipe = find_recipe_to_build(dep);
+                if (maybe_dep_recipe.isNull) {
+                    // couldn't find a recipe that can build this dependency
+                    // see if it's a real file that exists
+                    if (dep.reality == Footprint.Reality.File && std.file.exists(dep.name)) {
+                        log.trace("  using real file %s", dep);
+                        // this is a real file, which is a terminal
+                        continue;
+                    }
+                    // otherwise, we don't know how to build this dependency
+                    enforce(false, format("no recipe found that can build footprint %s", dep));
+                    assert(0);
+                }
+                auto dep_walk = RecipeWalk(maybe_dep_recipe.get, Nullable!Recipe(walk.recipe), curr_nodes);
 
                 if (dep_walk in visited_walks) {
                     // we've already visited this walk, so we don't need to add it to the queue
