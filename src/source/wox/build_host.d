@@ -13,6 +13,8 @@ import std.exception : enforce;
 import std.typecons;
 import std.container.dlist;
 import std.parallelism;
+import std.algorithm;
+import core.atomic;
 import wren;
 
 import wox.log;
@@ -255,83 +257,104 @@ class BuildHost {
         // they are ordered with the top-level targets first, so we can work backwards
 
         // auto task_pool = new TaskPool(options.n_jobs);
-        // defaultPoolThreads = options.n_jobs;
+        defaultPoolThreads = options.n_jobs;
         shared bool[Recipe] visited_recipes;
 
         log.trace("executing solved recipes with %s jobs", options.n_jobs);
 
-        // foreach (node; parallel(toposorted_queue)) {
-        foreach (node; toposorted_queue) {
-            auto recipe = node.recipe;
-            // auto worker_ix = task_pool.workerIndex();
-            auto worker_ix = 0;
+        // foreach (i, ref node; parallel(toposorted_queue)) {
+        //     shared bool already_visited = false;
+        //     synchronized {
+        //         already_visited = (node.recipe in visited_recipes) !is null;
+        //     }
+        //     if (!already_visited) {
+        //         synchronized {
+        //             visited_recipes[node.recipe] = true;
+        //         }
+        //         auto result = execute_node_recipe(node);
+        //         if (!result) {
+        //             return false;
+        //         }
+        //     }
+        // }
 
-            synchronized {
-                if (node.recipe in visited_recipes) {
-                    continue;
-                }
-
-                visited_recipes[recipe] = true;
+        foreach (i, ref node; toposorted_queue) {
+            if (node.recipe in visited_recipes) {
+                continue;
             }
+            visited_recipes[node.recipe] = true;
 
-            synchronized {
-                log.trace(" [%s] maybe build %s with recipe '%s' <- %s",
-                    worker_ix,
-                    node.recipe.outputs, node.recipe.name, node.recipe.inputs
-                );
+            auto result = execute_node_recipe(node);
+            if (!result) {
+                return false;
             }
+        }
 
-            auto file_inputs = node.recipe.inputs
-                .filter!(x => x.reality == Footprint.Reality.File).array;
-            auto file_outputs = node.recipe.outputs
-                .filter!(x => x.reality == Footprint.Reality.File).array;
+        return true;
+    }
 
-            // 1. ensure all file inputs exist
-            foreach (input; file_inputs) {
-                if (!std.file.exists(input.name)) {
-                    log.err("file input '%s' does not exist", input.name);
-                    return false;
-                }
+    bool execute_node_recipe(SolverNode node) {
+        auto recipe = node.recipe;
+
+        // auto worker_ix = 0;
+        // log.trace(" [%s] maybe build %s with recipe '%s' <- %s",
+        //     worker_ix,
+        //     node.recipe.outputs, node.recipe.name, node.recipe.inputs
+        // );
+        log.trace(" maybe build %s with recipe '%s' <- %s",
+            node.recipe.outputs, node.recipe.name, node.recipe.inputs
+        );
+
+        auto file_inputs = node.recipe.inputs
+            .filter!(x => x.reality == Footprint.Reality.File).array;
+        auto file_outputs = node.recipe.outputs
+            .filter!(x => x.reality == Footprint.Reality.File).array;
+
+        // 1. ensure all file inputs exist
+        foreach (input; file_inputs) {
+            if (!std.file.exists(input.name)) {
+                log.err("file input '%s' does not exist", input.name);
+                return false;
             }
-            // get modtimes of all file inputs
-            auto file_input_modtimes = file_inputs
+        }
+        // get modtimes of all file inputs
+        auto file_input_modtimes = file_inputs
+            .map!(x => std.file.timeLastModified(x.name).toUnixTime);
+
+        // if all output files also exist, we can check their modtimes
+        bool all_outputs_exist = file_outputs.length > 0 && file_outputs.all!(
+            x => std.file.exists(x.name));
+
+        if (all_outputs_exist) {
+            // get modtimes of all file outputs
+            auto file_output_modtimes = file_outputs
                 .map!(x => std.file.timeLastModified(x.name).toUnixTime);
 
-            // if all output files also exist, we can check their modtimes
-            bool all_outputs_exist = file_outputs.length > 0 && file_outputs.all!(
-                x => std.file.exists(x.name));
-
-            if (all_outputs_exist) {
-                // get modtimes of all file outputs
-                auto file_output_modtimes = file_outputs
-                    .map!(x => std.file.timeLastModified(x.name).toUnixTime);
-
-                // if all file outputs are newer than all file inputs, we don't need to build
-                auto newest_file_input_modtime = file_input_modtimes.maxElement;
-                auto oldest_file_output_modtime = file_output_modtimes.minElement;
-                if (newest_file_input_modtime < oldest_file_output_modtime) {
-                    log.trace("  skipping %s because all outputs are newer than all inputs",
-                        node.recipe.name);
-                    continue;
-                }
+            // if all file outputs are newer than all file inputs, we don't need to build
+            auto newest_file_input_modtime = file_input_modtimes.maxElement;
+            auto oldest_file_output_modtime = file_output_modtimes.minElement;
+            if (newest_file_input_modtime < oldest_file_output_modtime) {
+                log.trace("  skipping %s because all outputs are newer than all inputs",
+                    node.recipe.name);
+                return true;
             }
+        }
 
-            foreach (step; recipe.steps) {
-                log.trace("  executing step %s", step);
-                auto step_result = execute_step(step);
-                if (!step_result) {
-                    log.err("   error executing step %s", step);
-                    return false;
-                }
+        foreach (step; recipe.steps) {
+            log.trace("  executing step %s", step);
+            auto step_result = execute_step(step);
+            if (!step_result) {
+                log.err("   error executing step %s", step);
+                return false;
             }
+        }
 
-            // all steps finished, check that all outputs exist
-            foreach (output; file_outputs) {
-                if (!std.file.exists(output.name)) {
-                    log.err("  output '%s' does not exist after executing recipe '%s'",
-                        output.name, recipe.name);
-                    return false;
-                }
+        // all steps finished, check that all outputs exist
+        foreach (output; file_outputs) {
+            if (!std.file.exists(output.name)) {
+                log.err("  output '%s' does not exist after executing recipe '%s'",
+                    output.name, recipe.name);
+                return false;
             }
         }
 
