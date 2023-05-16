@@ -19,6 +19,8 @@ struct BindForeignW {
                 return &W.cliopt_int;
             case "cliopt_bool(_,_)":
                 return &W.cliopt_bool;
+            case "env(_,_)":
+                return &W.env;
             case "glob(_)":
                 return &W.glob;
             case "ext_add(_,_)":
@@ -47,6 +49,8 @@ struct BindForeignW {
                 return &W.log_trc;
             case "log_dbg(_)":
                 return &W.log_dbg;
+            case "shell(_)":
+                return &W.shell;
             default:
                 enforce(0, format("failed to bind unknown method %s.%s", className, signature));
                 assert(0);
@@ -97,6 +101,17 @@ struct BindForeignW {
 
             auto bool_opt = wox_context.parsed_args.flag(name.to!string);
             wrenSetSlotBool(vm, 0, bool_opt);
+        }
+
+        // env(name, default) -> string
+        static void env(WrenVM* vm) {
+            auto name = wrenGetSlotString(vm, 1).to!string;
+            auto def = wrenGetSlotString(vm, 2);
+
+            if (name in wox_context.env)
+                wrenSetSlotString(vm, 0, wox_context.env[name].toStringz);
+            else
+                wrenSetSlotString(vm, 0, def);
         }
 
         // glob(pattern) -> list[string]
@@ -236,6 +251,18 @@ struct BindForeignW {
         static void log_dbg(WrenVM* vm) {
             auto msg = wrenGetSlotString(vm, 1).to!string;
             wox_context.log.dbg(msg);
+        }
+
+        // shell(cmd) -> string
+        static void shell(WrenVM* vm) {
+            auto cmd = wrenGetSlotString(vm, 1).to!string;
+
+            auto result = Utils.shell_execute(cmd);
+            if (result !is null) {
+                wrenSetSlotString(vm, 0, result.toStringz);
+            } else {
+                wrenSetSlotNull(vm, 0);
+            }
         }
     }
 }

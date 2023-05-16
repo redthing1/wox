@@ -2,11 +2,12 @@
 
 // general wox utils
 class W {
-    // cli args
+    // cli args and environment vars
     foreign static cliopts()                            // all cli args
     foreign static cliopt(name, default)                // string cli opt
     foreign static cliopt_int(name, default)            // int cli opt
     foreign static cliopt_bool(name, default)           // bool cli opt
+    foreign static env(name, default)                   // string env var
 
     // path utils
     foreign static glob(pattern)                        // glob files
@@ -25,6 +26,9 @@ class W {
     foreign static log_inf(msg)                         // log info msg
     foreign static log_trc(msg)                         // log trace msg
     foreign static log_dbg(msg)                         // log debug msg
+
+    // shell
+    foreign static shell(cmd)                           // run shell cmd
 }
 
 // models

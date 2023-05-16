@@ -3,6 +3,7 @@ module wox.foreign.utils;
 import std.regex;
 
 import wox.foreign.imports;
+import wox.foreign.binder;
 import wox.foreign.utils;
 
 static struct Utils {
@@ -59,6 +60,18 @@ static struct Utils {
             wrenSetSlotString(vm, temp_slot, str_list_items[i].toStringz);
             // add the item to the list
             wrenInsertInList(vm, list_slot, i, temp_slot);
+        }
+    }
+
+    static string shell_execute(string command) {
+        import std.process;
+
+        try {
+            auto command_result = executeShell(command);
+            return command_result.output.idup;
+        } catch (Exception e) {
+            wox_context.log.err("error executing shell command: `%s`: %s", command, e);
+            return null;
         }
     }
 }

@@ -20,6 +20,9 @@ var libs = ["m"]
 for (lib in libs) {
     cflags.add("-l%(lib)")
 }
+// just for fun, get all libc
+var libc_sos = W.shell("ldconfig -p | grep libc.so | awk '{print $4}'").split("\n")
+W.log_wrn("available libc.so's: %(libc_sos)")
 
 // srcs
 var srcs = W.glob("./*.c")
