@@ -133,13 +133,21 @@ class Recipe {
 class Command {
     construct new(cmd) {
         _cmd = cmd
+        _quiet = false
     }
     cmd { _cmd }
+    quiet { _quiet }
+    quiet=(value) { _quiet = value }
 }
 
 // data stuff for recipes: these don't actually execute but rather return data
 class R {
     static c(cmd) {
         return Command.new(cmd)
+    }
+    static cq(cmd) {
+        var command = c(cmd)
+        command.quiet = true
+        return command
     }
 }

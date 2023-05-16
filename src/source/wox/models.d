@@ -25,6 +25,7 @@ struct Footprint {
 
 struct CommandStep {
     string cmd;
+    bool is_quiet = false;
 }
 
 struct Recipe {
@@ -179,7 +180,13 @@ struct ModelsFromWren {
         enforce(wrenGetSlotType(vm, 0) == WREN_TYPE_STRING, "return value of cmd property is not a string");
         ret.cmd = wrenGetSlotString(vm, 0).to!string;
 
-        // writefln("converted step: %s", ret);
+        // get is_quiet property
+        auto quiet_prop_h = wrenMakeCallHandle(vm, "quiet");
+        wrenSetSlotHandle(vm, 0, step_h);
+        auto quiet_prop_call_result = wrenCall(vm, quiet_prop_h);
+        enforce(quiet_prop_call_result == WREN_RESULT_SUCCESS, "failed to get quiet property of step");
+        enforce(wrenGetSlotType(vm, 0) == WREN_TYPE_BOOL, "return value of quiet property is not a bool");
+        ret.is_quiet = wrenGetSlotBool(vm, 0);
 
         return ret;
     }

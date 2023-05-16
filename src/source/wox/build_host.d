@@ -434,7 +434,7 @@ class BuildHost {
             synchronized {
                 log.trace("  [%s] executing step %s", worker_ix, step);
             }
-            auto step_result = execute_step(step);
+            auto step_result = execute_step(log, step);
             if (!step_result) {
                 synchronized {
                     log.err("  [%s] error executing step %s", worker_ix, step);
@@ -457,13 +457,16 @@ class BuildHost {
         return true;
     }
 
-    bool execute_step(CommandStep step) {
+    bool execute_step(Logger log, CommandStep step) {
         import std.process;
 
         try {
+            if (!step.is_quiet) {
+                log.source = "cmd";
+                log.info("%s", step.cmd);
+            }
             auto command_result = executeShell(step.cmd);
             if (command_result.status != 0) {
-                // log.err("error executing shell command: `%s`: %s", step.cmd, command_result);
                 log.err("error executing shell command: `%s`:\n%s", step.cmd, command_result.output);
                 return false;
             }
