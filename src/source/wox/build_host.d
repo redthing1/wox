@@ -216,7 +216,10 @@ class BuildHost {
             }
         }
 
-        foreach (recipe; recipes) {
+        // foreach (recipe; recipes) {
+        for (auto recipe_ix = 0; recipe_ix < recipes.length; recipe_ix++) {
+            auto recipe = &recipes[recipe_ix];
+
             log.trace(" resolving recipe '%s'", recipe.name);
             for (auto i = 0; i < recipe.inputs.length; i++) {
                 auto input = &recipe.inputs[i];
@@ -226,6 +229,18 @@ class BuildHost {
                 auto output = &recipe.outputs[i];
                 ensure_footprint_reality(output);
             }
+
+            // remove any virtual footprints if we already have a file footprint for the same name
+            auto file_outputs = recipe.outputs
+                .filter!(x => x.reality == Footprint.Reality.File).array;
+            auto deduplicated_virtual_outputs = recipe.outputs
+                .filter!(x => x.reality == Footprint.Reality.Virtual)
+                .filter!(x => !file_outputs.any!(y => y.name == x.name))
+                .array;
+            
+
+            recipe.outputs = file_outputs ~ deduplicated_virtual_outputs;
+            // log.trace("  recipe '%s' new outputs: %s", recipe.name, recipe.outputs);
         }
     }
 
@@ -237,16 +252,18 @@ class BuildHost {
         // they are ordered with the top-level targets first, so we can work backwards
 
         log.trace("building recipes");
+        bool[Recipe] visited_recipes;
         foreach (node; toposorted_nodes.reverse) {
-            // ignore any virtual footprints
-            if (node.footprint.reality == Footprint.Reality.Virtual) {
-                log.dbg(" skipping virtual footprint %s", node.footprint);
+            if (node.recipe in visited_recipes) {
                 continue;
             }
+            // log.trace(" building %s with recipe '%s' <- %s",
+            //     node.footprint, node.recipe.name, node.recipe.inputs);
             log.trace(" building %s with recipe '%s' <- %s",
-                node.footprint, node.recipe.name, node.recipe.inputs);
+                node.recipe.outputs, node.recipe.name, node.recipe.inputs);
 
             auto recipe = node.recipe;
+            visited_recipes[recipe] = true;
             foreach (step; recipe.steps) {
                 log.trace("  executing step %s", step);
                 auto step_result = execute_step(step);
