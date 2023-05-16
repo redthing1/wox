@@ -257,6 +257,14 @@ class BuildHost {
             Recipe recipe;
             Nullable!Recipe parent_recipe;
             SolverNode[] parent_nodes;
+
+            string toString() const {
+                return format("RecipeWalk(recipe: '%s', parent: '%s', parent_nodes: %s)",
+                    recipe.name,
+                    parent_recipe.isNull ? "<null>" : parent_recipe.get.name,
+                    parent_nodes
+                );
+            }
         }
 
         struct Edge {
@@ -280,7 +288,11 @@ class BuildHost {
             visited_walks[walk] = true;
 
             // process this walk
-            log.trace("processing recipe '%s'", walk.recipe.name);
+            // log.trace("processing recipe '%s'", walk.recipe.name);
+            log.trace("processing recipe '%s' (parent: '%s')",
+                walk.recipe.name,
+                walk.parent_recipe.isNull ? "<null>" : walk.parent_recipe.get.name
+            );
 
             // add graph nodes for the outputs
             SolverNode[] curr_nodes;
@@ -312,6 +324,7 @@ class BuildHost {
                 } else {
                     // if the parent is null, this is a root node
                     graph.roots ~= output_node;
+                    log.trace("   added root %s", output_node);
                 }
 
                 curr_nodes ~= output_node;
@@ -337,6 +350,7 @@ class BuildHost {
                 }
 
                 // add it to the queue
+                log.dbg("  adding dependency walk %s", dep_walk);
                 recipe_queue.insertBack(dep_walk);
             }
         }
@@ -373,7 +387,7 @@ class BuildHost {
             visited_nodes[node] = true;
 
             // add this node to the graph
-            // log.trace(" gv node %s", node);
+            // log.dbg(" gv node %s", node);
             auto reality = node.data.reality;
             auto node_style = ["shape": "box"];
             switch (reality) {
@@ -394,15 +408,15 @@ class BuildHost {
 
             // add this node's children to the queue
             foreach (child; node.children) {
-                if (child in visited_nodes) {
-                    continue;
-                }
-
                 // this is a child, add an edge then queue it
-                // log.trace("  gv edge %s -> %s", node, child);
+                // log.dbg("  gv edge %s -> %s", node, child);
                 // gv.edge(node, child, ["style": "solid"]);
                 gv_builder ~= format("  \"%s\" -> \"%s\" [style=solid];\n", node, child);
-                node_stack.insertBack(child);
+                
+                // if child is not visited, add it to the queue
+                if (child !in visited_nodes) {
+                    node_stack.insertBack(child);
+                }
             }
         }
 
