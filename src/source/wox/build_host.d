@@ -237,7 +237,6 @@ class BuildHost {
                 .filter!(x => x.reality == Footprint.Reality.Virtual)
                 .filter!(x => !file_outputs.any!(y => y.name == x.name))
                 .array;
-            
 
             recipe.outputs = file_outputs ~ deduplicated_virtual_outputs;
             // log.trace("  recipe '%s' new outputs: %s", recipe.name, recipe.outputs);
@@ -251,22 +250,68 @@ class BuildHost {
         // now, we have a list of nodes
         // they are ordered with the top-level targets first, so we can work backwards
 
-        log.trace("building recipes");
+        log.trace("executing solved recipes");
         bool[Recipe] visited_recipes;
         foreach (node; toposorted_nodes.reverse) {
             if (node.recipe in visited_recipes) {
                 continue;
             }
-            // log.trace(" building %s with recipe '%s' <- %s",
-            //     node.footprint, node.recipe.name, node.recipe.inputs);
-            log.trace(" building %s with recipe '%s' <- %s",
+
+            log.trace(" maybe build %s with recipe '%s' <- %s",
                 node.recipe.outputs, node.recipe.name, node.recipe.inputs);
+
+            auto file_inputs = node.recipe.inputs
+                .filter!(x => x.reality == Footprint.Reality.File).array;
+            auto file_outputs = node.recipe.outputs
+                .filter!(x => x.reality == Footprint.Reality.File).array;
+
+            // 1. ensure all file inputs exist
+            foreach (input; file_inputs) {
+                if (!std.file.exists(input.name)) {
+                    log.err("file input '%s' does not exist", input.name);
+                    return false;
+                }
+            }
+            // get modtimes of all file inputs
+            auto file_input_modtimes = file_inputs
+                .map!(x => std.file.timeLastModified(x.name).toUnixTime);
+
+            // if all output files also exist, we can check their modtimes
+            bool all_outputs_exist = file_outputs.length > 0 && file_outputs.all!(x => std.file.exists(x.name));
+
+            if (all_outputs_exist) {
+                // get modtimes of all file outputs
+                auto file_output_modtimes = file_outputs
+                    .map!(x => std.file.timeLastModified(x.name).toUnixTime);
+
+                // if all file outputs are newer than all file inputs, we don't need to build
+                auto newest_file_input_modtime = file_input_modtimes.maxElement;
+                auto oldest_file_output_modtime = file_output_modtimes.minElement;
+                if (newest_file_input_modtime < oldest_file_output_modtime) {
+                    log.trace("  skipping %s because all outputs are newer than all inputs",
+                        node.recipe.name);
+                    continue;
+                }
+            }
 
             auto recipe = node.recipe;
             visited_recipes[recipe] = true;
             foreach (step; recipe.steps) {
                 log.trace("  executing step %s", step);
                 auto step_result = execute_step(step);
+                if (!step_result) {
+                    log.err("   error executing step %s", step);
+                    return false;
+                }
+            }
+
+            // all steps finished, check that all outputs exist
+            foreach (output; file_outputs) {
+                if (!std.file.exists(output.name)) {
+                    log.err("  output '%s' does not exist after executing recipe '%s'",
+                        output.name, recipe.name);
+                    return false;
+                }
             }
         }
 
@@ -274,7 +319,19 @@ class BuildHost {
     }
 
     bool execute_step(CommandStep step) {
-        return true;
+        import std.process;
+
+        try {
+            auto command_result = executeShell(step.cmd);
+            if (command_result.status != 0) {
+                log.err("error executing shell command: `%s`: %s", step.cmd, command_result);
+                return false;
+            }
+            return true;
+        } catch (Exception e) {
+            log.err("exception executing shell command: `%s`: %s", step.cmd, e);
+            return false;
+        }
     }
 
     SolverNode[] toposort_solver_graph(SolverGraph solver_graph) {
