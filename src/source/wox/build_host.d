@@ -330,9 +330,10 @@ class BuildHost {
 
     void dump_solver_graph(SolverGraph graph, string filename) {
         log.trace("dumping solver graph to %s", filename);
-        import dgraphviz;
 
-        auto gv = new Directed();
+        auto gv_builder = appender!string;
+
+        gv_builder ~= "digraph {\n";
 
         // dfs through the graph and add nodes to the graphviz graph
         bool[SolverNode] visited_nodes;
@@ -352,7 +353,23 @@ class BuildHost {
 
             // add this node to the graph
             // log.trace(" gv node %s", node);
-            gv.node(node, ["shape": "box", "color": "black"]);
+            auto reality = node.data.reality;
+            auto node_style = ["shape": "box"];
+            switch (reality) {
+            case Footprint.Reality.File:
+                node_style["color"] = "green";
+                break;
+            case Footprint.Reality.Virtual:
+                node_style["color"] = "blue";
+                break;
+            case Footprint.Reality.Unknown:
+                node_style["color"] = "red";
+                break;
+            default:
+                assert(0);
+            }
+            // gv.node(node, node_style);
+            gv_builder ~= format("  \"%s\" [shape=box,color=%s];\n", node, node_style["color"]);
 
             // add this node's children to the queue
             foreach (child; node.children) {
@@ -362,11 +379,15 @@ class BuildHost {
 
                 // this is a child, add an edge then queue it
                 // log.trace("  gv edge %s -> %s", node, child);
-                gv.edge(node, child);
+                // gv.edge(node, child, ["style": "solid"]);
+                gv_builder ~= format("  \"%s\" -> \"%s\" [style=solid];\n", node, child);
                 node_stack.insertBack(child);
             }
         }
 
-        gv.save(filename);
+        gv_builder ~= "}\n";
+
+        // gv.save(filename);
+        std.file.write(filename, gv_builder.data);
     }
 }
