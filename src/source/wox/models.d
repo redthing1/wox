@@ -121,7 +121,8 @@ struct ModelsFromWren {
         if (wrenGetSlotType(vm, 0) == WREN_TYPE_NULL) {
             ret.name = null;
         } else {
-            enforce(wrenGetSlotType(vm, 0) == WREN_TYPE_STRING, "return value of name property is not a string");
+            enforce(wrenGetSlotType(vm, 0) == WREN_TYPE_STRING,
+                format("return value of name property is not a string, but %s", wrenGetSlotType(vm, 0)));
             ret.name = wrenGetSlotString(vm, 0).to!string;
         }
 

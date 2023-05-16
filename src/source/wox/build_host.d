@@ -5,6 +5,8 @@ import std.file;
 import std.path;
 import std.conv;
 import std.string;
+import std.algorithm;
+import std.array;
 import core.stdc.stdio;
 import core.stdc.string;
 import std.exception : enforce;
@@ -127,6 +129,8 @@ class BuildHost {
         auto all_recipes_h = WrenUtils.wren_read_handle_list(vm, 0, 1);
 
         auto default_recipe = ModelsFromWren.convert_recipe_from_wren(vm, default_recipe_h);
+        auto all_recipes = all_recipes_h
+            .map!(x => ModelsFromWren.convert_recipe_from_wren(vm, x)).array;
 
         return true;
     }

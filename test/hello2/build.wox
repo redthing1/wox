@@ -82,7 +82,7 @@ var clean_recipe = W.virtual_recipe(
 // 5. a virtual recipe to cat all the source files together and scp that to example.com
 var upload_main_recipe = W.virtual_recipe(
     "upload_main",
-    [srcs],
+    srcs,
     [
         // cat all the source files together and scp that to example.com
         R.c("cat %(W.join(srcs)) | ssh example.com 'cat > /tmp/hello.c'"),
