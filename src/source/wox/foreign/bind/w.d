@@ -64,7 +64,7 @@ struct BindForeignW {
         return null;
     }
 
-    extern(C) struct W {
+    extern (C) struct W {
         // cliopts() -> list[string]
         static void cliopts(WrenVM* vm) {
             WrenUtils.wren_write_string_list(vm, 0, wox_context.args, 1);
@@ -124,7 +124,11 @@ struct BindForeignW {
 
             auto pattern_str = pattern.to!string;
             // convert glob expression to regex
-            auto regex_str = pattern_str.replace("*", ".*");
+            auto regex_like_pattern = pattern_str
+                .replace(".", r"\.")
+                .replace("?", ".")
+                .replace("*", ".*");
+            auto regex_str = format("^%s$", regex_like_pattern);
             auto matching_files = Utils.recursive_listdir_matching(".", regex_str);
 
             WrenUtils.wren_write_string_list(vm, 0, matching_files, 1);
