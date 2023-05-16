@@ -21,7 +21,7 @@ import optional;
 
 import wox.log;
 import wox.models;
-import wox.wren_integration;
+import wox.host.meta;
 import wox.foreign.binder;
 import wox.wren_utils;
 import wox.db;

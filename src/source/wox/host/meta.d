@@ -1,4 +1,4 @@
-module wox.wren_integration;
+module wox.host.meta;
 
 enum WOX_SCRIPT = import("wox.wren");
 
