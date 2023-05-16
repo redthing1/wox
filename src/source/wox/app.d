@@ -18,7 +18,7 @@ int main(string[] args) {
 	// args before -- go to wox, args after -- go to the buildfile
 	auto split_args = args.split("--");
 	auto wox_args = split_args[0];
-	auto buildfile_args = split_args[1];
+	auto buildfile_args = split_args.length > 1 ? split_args[1] : [];
 
 	auto a = new Program("wox", "0.1").summary("A flexible recipe build system inspired by Make")
 		.author("redthing1")
@@ -28,6 +28,7 @@ int main(string[] args) {
 				.defaultValue(DEFAULT_BUILDFILE_NAME))
 		.add(new Option("C", "workdir", "change to this directory before doing anything")
 				.defaultValue("."))
+		.add(new Option("z", "graphviz_file", "dump a graphviz of the dependency graph to this file"))
 		.parse(wox_args);
 
 	auto verbose_count = min(a.occurencesOf("verbose"), 3);
@@ -63,7 +64,11 @@ int main(string[] args) {
 	auto buildfile_contents = std.file.readText(buildfile_path);
 
 	// pass it to the build host
-	auto host = new BuildHost(log);
+	auto build_host_options = BuildHost.Options.init;
+	if (a.option("graphviz_file") !is null) {
+		build_host_options.graphviz_file = a.option("graphviz_file");
+	}
+	auto host = new BuildHost(log, build_host_options);
 	auto build_targets = a.args("targets");
 	auto build_success = host.build(buildfile_contents, build_targets, workdir, buildfile_args, env_vars);
 

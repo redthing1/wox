@@ -24,8 +24,15 @@ import wox.solver;
 class BuildHost {
     static Logger log;
 
-    this(Logger log) {
+    struct Options {
+        string graphviz_file = null;
+    }
+
+    Options options;
+
+    this(Logger log, Options options) {
         this.log = log;
+        this.options = options;
     }
 
     extern (C) static void wren_write(WrenVM* vm, const(char)* text) {
@@ -247,24 +254,52 @@ class BuildHost {
 
         log.trace(" adding target recipes to solver graph");
 
-        auto recipe_queue = DList!Recipe();
+        struct RecipeWalk {
+            Recipe recipe;
+            Nullable!Recipe parent_recipe;
+            SolverNode[] parent_nodes;
+        }
+
+        auto recipe_queue = DList!RecipeWalk();
         bool[Recipe] visited_recipes;
 
         foreach (recipe; goal_recipes) {
-            recipe_queue.insertBack(recipe);
+            recipe_queue.insertBack(RecipeWalk(recipe, Nullable!Recipe.init, []));
         }
 
         while (!recipe_queue.empty) {
-            auto recipe = recipe_queue.front;
+            auto walk = recipe_queue.front;
             recipe_queue.removeFront;
 
-            visited_recipes[recipe] = true;
+            visited_recipes[walk.recipe] = true;
 
             // process this recipe
-            log.trace("processing recipe '%s'", recipe.name);
+            log.trace("processing recipe '%s'", walk.recipe.name);
 
-            // add dependencies to the queue
-            foreach (dep; get_dependencies(recipe)) {
+            // add graph nodes for the outputs
+            SolverNode[] curr_nodes;
+            foreach (output; walk.recipe.outputs) {
+                log.trace("  adding node for output %s", output);
+                auto output_node = new SolverNode(output);
+
+                // add this node to my parent's children
+                if (!walk.parent_recipe.isNull) {
+                    // since we are the child, our input is the parent's outputs
+                    // so add this node to the parent node's children
+                    foreach (parent_node; walk.parent_nodes) {
+                        parent_node.children ~= output_node;
+                        log.trace("   added edge %s -> %s", parent_node, output_node);
+                    }
+                } else {
+                    // if the parent is null, this is a root node
+                    graph.roots ~= output_node;
+                }
+
+                curr_nodes ~= output_node;
+            }
+
+            // add dependencies to the queue (from our inputs)
+            foreach (dep; get_dependencies(walk.recipe)) {
                 // first, check if the footprint is a file that exists
                 if (dep.reality == Footprint.Reality.File && std.file.exists(dep.name)) {
                     log.trace("  using file %s", dep);
@@ -281,10 +316,57 @@ class BuildHost {
                 }
 
                 // add it to the queue
-                recipe_queue.insertBack(dep_recipe);
+                recipe_queue.insertBack(RecipeWalk(dep_recipe, Nullable!Recipe(walk.recipe), curr_nodes));
             }
         }
 
+        // now it should be a real graph
+        if (options.graphviz_file !is null) {
+            dump_solver_graph(graph, options.graphviz_file);
+        }
+
         return true;
+    }
+
+    void dump_solver_graph(SolverGraph graph, string filename) {
+        log.trace("dumping solver graph to %s", filename);
+        import dgraphviz;
+
+        auto gv = new Directed();
+
+        // dfs through the graph and add nodes to the graphviz graph
+        bool[SolverNode] visited_nodes;
+        auto node_stack = DList!SolverNode();
+
+        // queue initial nodes
+        foreach (node; graph.roots) {
+            // log.trace(" gv root %s", node);
+            node_stack.insertBack(node);
+        }
+
+        while (!node_stack.empty) {
+            auto node = node_stack.front;
+            node_stack.removeFront;
+
+            visited_nodes[node] = true;
+
+            // add this node to the graph
+            // log.trace(" gv node %s", node);
+            gv.node(node, ["shape": "box", "color": "black"]);
+
+            // add this node's children to the queue
+            foreach (child; node.children) {
+                if (child in visited_nodes) {
+                    continue;
+                }
+
+                // this is a child, add an edge then queue it
+                // log.trace("  gv edge %s -> %s", node, child);
+                gv.edge(node, child);
+                node_stack.insertBack(child);
+            }
+        }
+
+        gv.save(filename);
     }
 }

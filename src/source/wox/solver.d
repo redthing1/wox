@@ -18,15 +18,20 @@ class SolverGraph {
 }
 
 class SolverNode {
-    Nullable!Footprint data;
+    alias NodeData = Footprint;
+    NodeData data;
     SolverNode parent = null;
     SolverNode[] children;
 
-    this(Nullable!Footprint data) {
+    this(NodeData data) {
         this.data = data;
     }
 
     @get is_leaf() {
         return this.children.length == 0;
+    }
+
+    override string toString() const {
+        return format("SolverNode(%s)", this.data);
     }
 }
