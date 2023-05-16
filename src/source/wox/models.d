@@ -71,122 +71,58 @@ struct Recipe {
     }
 }
 
-struct ModelsFromWren {
+struct ModelsFromWrenConverter {
     // convert models from wren handles
     import wren;
     import wox.host.meta;
     import wox.wren;
 
-    static Recipe convert_recipe_from_wren(WrenVM* vm, WrenHandle* recipe_h) {
+    WrenExt wren_ext;
+
+    this(WrenVM* vm) {
+        wren_ext = WrenExt(vm);
+    }
+
+    Recipe convert_recipe_from_wren(WrenHandle* recipe_h) {
         Recipe ret;
 
-        wrenEnsureSlots(vm, 4);
+        // get name
+        ret.name = wren_ext.call_prop_nullable_string(recipe_h, "name");
 
-        // get class definition of Recipe
-        wrenGetVariable(vm, WOX_MODULE, "Recipe", 0);
-        auto recipe_type_h = wrenGetSlotHandle(vm, 0);
-
-        // get name property
-        auto name_prop_h = wrenMakeCallHandle(vm, "name");
-        wrenSetSlotHandle(vm, 0, recipe_h);
-        auto name_prop_call_result = wrenCall(vm, name_prop_h);
-        enforce(name_prop_call_result == WREN_RESULT_SUCCESS, "failed to get name property of recipe");
-        if (wrenGetSlotType(vm, 0) == WREN_TYPE_NULL) {
-            ret.name = null;
-        } else {
-            enforce(wrenGetSlotType(vm, 0) == WREN_TYPE_STRING, "return value of name property is not a string");
-            ret.name = wrenGetSlotString(vm, 0).to!string;
-        }
-
-        // get inputs (which are a list of footprints)
-        auto inputs_prop_h = wrenMakeCallHandle(vm, "inputs");
-        wrenSetSlotHandle(vm, 0, recipe_h);
-        auto inputs_prop_call_result = wrenCall(vm, inputs_prop_h);
-        enforce(inputs_prop_call_result == WREN_RESULT_SUCCESS, "failed to get inputs property of recipe");
-        enforce(wrenGetSlotType(vm, 0) == WREN_TYPE_LIST, "return value of inputs property is not a list");
-        auto inputs_list_h = WrenUtils.wren_read_handle_list(vm, 0, 1);
+        auto inputs_list_h = wren_ext.call_prop_handle_list(recipe_h, "inputs");
         foreach (i, input_h; inputs_list_h) {
-            ret.inputs ~= convert_footprint_from_wren(vm, input_h);
+            ret.inputs ~= convert_footprint_from_wren(input_h);
         }
 
         // get outputs (which are a list of footprints)
-        auto outputs_prop_h = wrenMakeCallHandle(vm, "outputs");
-        wrenSetSlotHandle(vm, 0, recipe_h);
-        auto outputs_prop_call_result = wrenCall(vm, outputs_prop_h);
-        enforce(outputs_prop_call_result == WREN_RESULT_SUCCESS, "failed to get outputs property of recipe");
-        enforce(wrenGetSlotType(vm, 0) == WREN_TYPE_LIST, "return value of outputs property is not a list");
-        auto outputs_list_h = WrenUtils.wren_read_handle_list(vm, 0, 1);
+        auto outputs_list_h = wren_ext.call_prop_handle_list(recipe_h, "outputs");
         foreach (i, output_h; outputs_list_h) {
-            ret.outputs ~= convert_footprint_from_wren(vm, output_h);
+            ret.outputs ~= convert_footprint_from_wren(output_h);
         }
 
         // get steps (which are a list of steps)
-        auto steps_prop_h = wrenMakeCallHandle(vm, "steps");
-        wrenSetSlotHandle(vm, 0, recipe_h);
-        auto steps_prop_call_result = wrenCall(vm, steps_prop_h);
-        enforce(steps_prop_call_result == WREN_RESULT_SUCCESS, "failed to get steps property of recipe");
-        enforce(wrenGetSlotType(vm, 0) == WREN_TYPE_LIST, "return value of steps property is not a list");
-        auto steps_list_h = WrenUtils.wren_read_handle_list(vm, 0, 1);
+        auto steps_list_h = wren_ext.call_prop_handle_list(recipe_h, "steps");
         foreach (i, step_h; steps_list_h) {
-            ret.steps ~= convert_step_from_wren(vm, step_h);
+            ret.steps ~= convert_step_from_wren(step_h);
         }
-
-        // writefln("converted recipe:\n%s", ret);
 
         return ret;
     }
 
-    static Footprint convert_footprint_from_wren(WrenVM* vm, WrenHandle* footprint_h) {
+    Footprint convert_footprint_from_wren(WrenHandle* footprint_h) {
         Footprint ret;
 
-        wrenEnsureSlots(vm, 4);
-
-        // get name property
-        auto name_prop_h = wrenMakeCallHandle(vm, "name");
-        wrenSetSlotHandle(vm, 0, footprint_h);
-        auto name_prop_call_result = wrenCall(vm, name_prop_h);
-        enforce(name_prop_call_result == WREN_RESULT_SUCCESS, "failed to get name property of footprint");
-        if (wrenGetSlotType(vm, 0) == WREN_TYPE_NULL) {
-            ret.name = null;
-        } else {
-            enforce(wrenGetSlotType(vm, 0) == WREN_TYPE_STRING,
-                format("return value of name property is not a string, but %s", wrenGetSlotType(vm, 0)));
-            ret.name = wrenGetSlotString(vm, 0).to!string;
-        }
-
-        // get reality property
-        auto reality_prop_h = wrenMakeCallHandle(vm, "reality");
-        wrenSetSlotHandle(vm, 0, footprint_h);
-        auto reality_prop_call_result = wrenCall(vm, reality_prop_h);
-        enforce(reality_prop_call_result == WREN_RESULT_SUCCESS, "failed to get reality property of footprint");
-        enforce(wrenGetSlotType(vm, 0) == WREN_TYPE_NUM, "return value of reality property is not a number");
-        ret.reality = cast(Footprint.Reality) cast(int) wrenGetSlotDouble(vm, 0);
-
-        // writefln("converted footprint: %s", ret);
+        ret.name = wren_ext.call_prop_nullable_string(footprint_h, "name");
+        ret.reality = cast(Footprint.Reality) cast(int) wren_ext.call_prop_num(footprint_h, "reality");
 
         return ret;
     }
 
-    static CommandStep convert_step_from_wren(WrenVM* vm, WrenHandle* step_h) {
+    CommandStep convert_step_from_wren(WrenHandle* step_h) {
         CommandStep ret;
 
-        wrenEnsureSlots(vm, 4);
-
-        // get cmd property
-        auto cmd_prop_h = wrenMakeCallHandle(vm, "cmd");
-        wrenSetSlotHandle(vm, 0, step_h);
-        auto cmd_prop_call_result = wrenCall(vm, cmd_prop_h);
-        enforce(cmd_prop_call_result == WREN_RESULT_SUCCESS, "failed to get cmd property of step");
-        enforce(wrenGetSlotType(vm, 0) == WREN_TYPE_STRING, "return value of cmd property is not a string");
-        ret.cmd = wrenGetSlotString(vm, 0).to!string;
-
-        // get is_quiet property
-        auto quiet_prop_h = wrenMakeCallHandle(vm, "quiet");
-        wrenSetSlotHandle(vm, 0, step_h);
-        auto quiet_prop_call_result = wrenCall(vm, quiet_prop_h);
-        enforce(quiet_prop_call_result == WREN_RESULT_SUCCESS, "failed to get quiet property of step");
-        enforce(wrenGetSlotType(vm, 0) == WREN_TYPE_BOOL, "return value of quiet property is not a bool");
-        ret.is_quiet = wrenGetSlotBool(vm, 0);
+        ret.cmd = wren_ext.call_prop_string(step_h, "cmd");
+        ret.is_quiet = wren_ext.call_prop_bool(step_h, "quiet");
 
         return ret;
     }

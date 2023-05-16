@@ -169,8 +169,10 @@ class WoxBuilder {
         // slot 0 contains a list of recipe objects
         auto all_recipes_h = WrenUtils.wren_read_handle_list(vm, 0, 1);
 
+        auto models_converter = ModelsFromWrenConverter(vm);
+
         auto all_recipes = all_recipes_h
-            .map!(x => ModelsFromWren.convert_recipe_from_wren(vm, x)).array;
+            .map!(x => models_converter.convert_recipe_from_wren(x)).array;
         // find the default recipe in the list
         auto maybe_default_recipe = all_recipes.filter!(x => x.name == default_recipe_name);
         if (maybe_default_recipe.empty) {
