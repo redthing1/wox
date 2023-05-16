@@ -15,6 +15,11 @@ struct Footprint {
 
     string name;
     Reality reality;
+
+    string toString() const {
+        static immutable short_reality = ["U", "F", "V"];
+        return format("%s:%s", name, short_reality[cast(int) reality]);
+    }
 }
 
 struct CommandStep {
@@ -27,7 +32,7 @@ struct Recipe {
     Footprint[] outputs;
     CommandStep[] steps;
 
-    string toString() {
+    string toString() const {
         auto sb = appender!string;
 
         sb ~= format("Recipe(%s) {\n", name);
