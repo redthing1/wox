@@ -53,16 +53,25 @@ struct Logger {
         auto level_color = colorFor(level);
         auto meta_str = formatMeta(level);
 
+        auto sb = appender!string;
+
         if (use_meta) {
             if (use_colors) {
-                colorize.cwritef(meta_str.color(level_color, colorize.bg.black));
+                sb ~= meta_str.color(level_color, colorize.bg.black);
             } else {
-                write(meta_str);
+                sb ~= meta_str;
             }
-            write(" ");
+            sb ~= " ";
         }
 
-        writefln("%s", log);
+        sb ~= log;
+
+        if (use_colors) {
+            cwriteln(sb.data);
+        } else {
+            writeln(sb.data);
+        }
+
         stdout.flush();
     }
 
