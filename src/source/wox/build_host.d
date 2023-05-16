@@ -261,18 +261,46 @@ class BuildHost {
         // they are ordered with the top-level targets first, so we can work backwards
 
         auto use_single_thread = options.n_jobs == 1;
-        auto task_pool = new TaskPool(options.n_jobs);
-        // defaultPoolThreads = options.n_jobs;
+        // auto task_pool = new TaskPool(options.n_jobs);
+        // task_pool.isDaemon = true;
+        TaskPool make_task_pool() {
+            auto task_pool = new TaskPool(options.n_jobs);
+            task_pool.isDaemon = true;
+            return task_pool;
+        }
+
+        auto task_pool = make_task_pool();
+        // Task[] task_pool_tasks;
         shared bool[Recipe] visited_recipes;
 
         log.trace("executing solved recipes with %s jobs", options.n_jobs);
-        // log.trace("executing solved recipes");
+
+        auto current_in_degree = -1;
 
         foreach (i, ref node; toposorted_queue) {
             if (node.recipe in visited_recipes) {
                 continue;
             }
             visited_recipes[node.recipe] = true;
+
+            auto node_in_degree = node.in_degree;
+            if (current_in_degree < 0)
+                current_in_degree = node_in_degree;
+            if (node_in_degree < current_in_degree) {
+                // this node has a lower in-degree
+                // meaning we have to wait for the previous nodes to finish
+                synchronized {
+                    log.trace(" current in-degree %s, next in-degree %s, waiting for previous nodes to finish",
+                        current_in_degree, node_in_degree);
+                }
+                if (!use_single_thread) {
+                    // wait for everything to finish
+                    task_pool.finish(true);
+                    // create new task pool
+                    task_pool = make_task_pool();
+                }
+                current_in_degree = node_in_degree;
+            }
 
             if (use_single_thread) {
                 auto result = execute_node_recipe(task_pool, node, log);
@@ -286,7 +314,7 @@ class BuildHost {
             }
         }
 
-        task_pool.finish(true);
+        // task_pool.finish(true);
 
         return true;
     }
@@ -407,6 +435,7 @@ class BuildHost {
             }
 
             visited[node] = true;
+            node.in_degree = in_degree[node];
 
             foreach (child; node.children) {
                 // update in-degree of the child
@@ -414,6 +443,7 @@ class BuildHost {
                     in_degree[child] = 0;
                 }
                 in_degree[child] += 1;
+                child.in_degree = in_degree[child];
                 if (child in visited) {
                     continue;
                 }

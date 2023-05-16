@@ -23,6 +23,8 @@ class SolverNode {
     SolverNode parent = null;
     SolverNode[] children;
 
+    int in_degree = 0;
+
     this(Footprint footprint) {
         this.footprint = footprint;
     }
