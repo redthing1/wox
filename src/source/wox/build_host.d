@@ -236,8 +236,9 @@ class BuildHost {
 
         Recipe find_recipe_to_build(Footprint footprint) {
             // find a recipe that says it can build this footprint
+            log.trace(" finding recipe to build footprint %s", footprint);
             foreach (recipe; all_recipes) {
-                log.trace("  checking if recipe '%s' can build footprint %s", recipe.name, footprint);
+                // log.trace("  checking if recipe '%s' can build footprint %s", recipe.name, footprint);
                 if (recipe.can_build_footprint(footprint)) {
                     log.trace("   recipe '%s' can build footprint %s", recipe.name, footprint);
                     return recipe;
@@ -252,18 +253,23 @@ class BuildHost {
             return recipe.inputs;
         }
 
-        log.trace(" adding target recipes to solver graph");
-
         struct RecipeWalk {
             Recipe recipe;
             Nullable!Recipe parent_recipe;
             SolverNode[] parent_nodes;
         }
 
+        struct Edge {
+            SolverNode from;
+            SolverNode to;
+        }
+
         auto recipe_queue = DList!RecipeWalk();
-        bool[Recipe] visited_recipes;
+        bool[RecipeWalk] visited_walks;
+        SolverNode[Footprint] nodes_for_footprints;
 
         foreach (recipe; goal_recipes) {
+            log.trace(" adding target recipe to solver graph: %s", recipe);
             recipe_queue.insertBack(RecipeWalk(recipe, Nullable!Recipe.init, []));
         }
 
@@ -271,16 +277,29 @@ class BuildHost {
             auto walk = recipe_queue.front;
             recipe_queue.removeFront;
 
-            visited_recipes[walk.recipe] = true;
+            visited_walks[walk] = true;
 
-            // process this recipe
+            // process this walk
             log.trace("processing recipe '%s'", walk.recipe.name);
 
             // add graph nodes for the outputs
             SolverNode[] curr_nodes;
             foreach (output; walk.recipe.outputs) {
-                log.trace("  adding node for output %s", output);
-                auto output_node = new SolverNode(output);
+                // log.trace("  adding node for output %s", output);
+                // auto output_node = new SolverNode(output);
+
+                // see if a node for this output already exists
+                SolverNode output_node = null;
+                if (output in nodes_for_footprints) {
+                    // use existing node
+                    output_node = nodes_for_footprints[output];
+                    log.trace("  using node for output %s", output);
+                } else {
+                    // create a new node for this output
+                    output_node = new SolverNode(output);
+                    log.trace("  created node for output %s", output);
+                    nodes_for_footprints[output] = output_node;
+                }
 
                 // add this node to my parent's children
                 if (!walk.parent_recipe.isNull) {
@@ -308,15 +327,17 @@ class BuildHost {
                 }
                 // find a recipe that can build this dependency
                 auto dep_recipe = find_recipe_to_build(dep);
+                auto dep_walk = RecipeWalk(dep_recipe, Nullable!Recipe(walk.recipe), curr_nodes);
 
-                if (dep_recipe in visited_recipes) {
-                    // we've already visited this recipe, so we don't need to add it to the queue
-                    log.dbg("  already visited dependency recipe '%s'", dep_recipe.name);
+                if (dep_walk in visited_walks) {
+                    // we've already visited this walk, so we don't need to add it to the queue
+                    log.dbg("  already visited dependency walk %s", dep_walk);
+
                     continue;
                 }
 
                 // add it to the queue
-                recipe_queue.insertBack(RecipeWalk(dep_recipe, Nullable!Recipe(walk.recipe), curr_nodes));
+                recipe_queue.insertBack(dep_walk);
             }
         }
 
