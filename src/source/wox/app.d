@@ -32,6 +32,7 @@ int main(string[] args) {
 		.add(new Option("z", "graphviz_file", "dump a graphviz of the dependency graph to this file"))
 		.add(new Option("j", "jobs", "number of jobs to run in parallel")
 				.defaultValue(totalCPUs.to!string))
+		.add(new Flag("k", "cache", "enable cache database"))
 		.parse(wox_args);
 
 	auto verbose_count = min(a.occurencesOf("verbose"), 3);
@@ -66,13 +67,13 @@ int main(string[] args) {
 	}
 	auto buildfile_contents = std.file.readText(buildfile_path);
 
-	// pass it to the build host
+	// configure build host
 	auto build_host_options = BuildHost.Options.init;
-	if (a.option("graphviz_file") !is null) {
-		build_host_options.graphviz_file = a.option("graphviz_file");
-	}
-	auto n_jobs = a.option("jobs").to!int;
-	build_host_options.n_jobs = n_jobs;
+	build_host_options.graphviz_file = a.option("graphviz_file");
+	build_host_options.n_jobs = a.option("jobs").to!int;
+	build_host_options.enable_cache = a.flag("cache");
+
+	// run build in host
 	auto host = new BuildHost(log, build_host_options);
 	auto build_targets = a.args("targets");
 	auto build_success = host.build(buildfile_contents, build_targets, workdir, buildfile_args, env_vars);
