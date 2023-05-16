@@ -69,8 +69,8 @@ var compressed_recipe = W.recipe(
     ]
 )
 
-// 4. a phony recipe for cleaning
-var clean_recipe = W.phony_recipe(
+// 4. a virtual recipe for cleaning
+var clean_recipe = W.virtual_recipe(
     "clean",
     [],
     [
@@ -79,8 +79,8 @@ var clean_recipe = W.phony_recipe(
     ]
 )
 
-// 5. a phony recipe to cat all the source files together and scp that to example.com
-var upload_main_recipe = W.phony_recipe(
+// 5. a virtual recipe to cat all the source files together and scp that to example.com
+var upload_main_recipe = W.virtual_recipe(
     "upload_main",
     [srcs],
     [
