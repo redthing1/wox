@@ -55,7 +55,7 @@ var main_recipe = W.recipe(
     [TARGET_MAIN],
     [
         // link all the .o files into the main target
-        R.c("%(cc) %(cflags) %(objs) -o %(TARGET_MAIN)"),
+        R.c("%(cc) %(W.join(cflags)) %(W.join(objs)) -o %(TARGET_MAIN)"),
     ]
 )
 
@@ -75,7 +75,7 @@ var clean_recipe = W.virtual_recipe(
     [],
     [
         // remove all the .o files and the targets
-        R.c("rm -f %(objs) %(TARGET_MAIN) %(TARGET_COMPRESSED)"),
+        R.c("rm -f %(W.join(objs)) %(TARGET_MAIN) %(TARGET_COMPRESSED)"),
     ]
 )
 
@@ -85,7 +85,7 @@ var upload_main_recipe = W.virtual_recipe(
     [srcs],
     [
         // cat all the source files together and scp that to example.com
-        R.c("cat %(srcs) | ssh example.com 'cat > /tmp/hello.c'"),
+        R.c("cat %(W.join(srcs)) | ssh example.com 'cat > /tmp/hello.c'"),
     ]
 )
 

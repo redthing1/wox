@@ -19,6 +19,7 @@ class W {
     foreign static path_dirname(path)                       // dirname of path
     foreign static path_basename(path)                      // basename of path
     foreign static path_extname(path)                       // extname of path
+    foreign static file_exists(path)                        // does file exist?
 
     // logging
     foreign static log_err(msg)                             // log err msg
@@ -29,6 +30,10 @@ class W {
 
     // shell
     foreign static shell(cmd)                               // run shell cmd
+
+    // misc utils
+    foreign static join(list, sep)                          // join list with sep
+    static join(list) { join(list, " ") }                   // join list with default sep
 
     // recipes
     // foreign static recipe(inputs, outputs, steps)           // recipe

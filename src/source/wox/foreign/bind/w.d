@@ -39,6 +39,8 @@ struct BindForeignW {
                 return &W.path_basename;
             case "path_extname(_)":
                 return &W.path_extname;
+            case "file_exists(_)":
+                return &W.file_exists;
             case "log_err(_)":
                 return &W.log_err;
             case "log_wrn(_)":
@@ -51,6 +53,8 @@ struct BindForeignW {
                 return &W.log_dbg;
             case "shell(_)":
                 return &W.shell;
+            case "join(_,_)":
+                return &W.join;
             default:
                 enforce(0, format("failed to bind unknown method %s.%s", className, signature));
                 assert(0);
@@ -218,6 +222,14 @@ struct BindForeignW {
             wrenSetSlotString(vm, 0, result.toStringz);
         }
 
+        // file_exists(path) -> bool
+        static void file_exists(WrenVM* vm) {
+            auto path = wrenGetSlotString(vm, 1).to!string;
+
+            auto result = std.file.exists(path);
+            wrenSetSlotBool(vm, 0, result);
+        }
+
         // foreign static log_err(msg)                         // log err msg
         // foreign static log_wrn(msg)                         // log warn msg
         // foreign static log_inf(msg)                         // log info msg
@@ -263,6 +275,16 @@ struct BindForeignW {
             } else {
                 wrenSetSlotNull(vm, 0);
             }
+        }
+
+        // join(list, sep) -> string
+        static void join(WrenVM* vm) {
+            auto list = WrenUtils.wren_read_string_list(vm, 1, 0);
+            auto sep = wrenGetSlotString(vm, 2).to!string;
+
+            auto result = list.join(sep);
+
+            wrenSetSlotString(vm, 0, result.toStringz);
         }
     }
 }
