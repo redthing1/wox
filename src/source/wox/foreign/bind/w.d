@@ -242,31 +242,31 @@ struct BindForeignW {
         // log_err(msg)
         static void log_err(WrenVM* vm) {
             auto msg = wrenGetSlotString(vm, 1).to!string;
-            wox_context.log.err(msg);
+            wox_context.buildscript_log.err(msg);
         }
 
         // log_wrn(msg)
         static void log_wrn(WrenVM* vm) {
             auto msg = wrenGetSlotString(vm, 1).to!string;
-            wox_context.log.wrn(msg);
+            wox_context.buildscript_log.wrn(msg);
         }
 
         // log_inf(msg)
         static void log_inf(WrenVM* vm) {
             auto msg = wrenGetSlotString(vm, 1).to!string;
-            wox_context.log.inf(msg);
+            wox_context.buildscript_log.inf(msg);
         }
 
         // log_trc(msg)
         static void log_trc(WrenVM* vm) {
             auto msg = wrenGetSlotString(vm, 1).to!string;
-            wox_context.log.trc(msg);
+            wox_context.buildscript_log.trc(msg);
         }
 
         // log_dbg(msg)
         static void log_dbg(WrenVM* vm) {
             auto msg = wrenGetSlotString(vm, 1).to!string;
-            wox_context.log.dbg(msg);
+            wox_context.buildscript_log.dbg(msg);
         }
 
         // shell(cmd) -> string

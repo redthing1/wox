@@ -9,15 +9,20 @@ import wox.foreign.bind.w;
 WoxForeignContext wox_context;
 
 struct WoxForeignContext {
-    Logger log;
+    Logger wox_log;
     string cwd;
     std.string.string[] args;
     string[string] env;
 
+    // derived stuff
+    Logger buildscript_log;
     ParsedArgs parsed_args;
 
     void derive() {
         parsed_args = ForeignWoxArgParser.parse(args.join(" "));
+
+        buildscript_log = wox_log;
+        buildscript_log.source = "bld";
     }
 }
 

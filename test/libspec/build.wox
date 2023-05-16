@@ -12,6 +12,8 @@ var cc = W.cliopt("--cc", "gcc")
 var ar = W.cliopt("--ar", "ar")
 var objcopy = W.cliopt("--objcopy", "objcopy")
 
+W.log_inf("building %(TARGET_NAME) with %(cc)")
+
 // cflags
 var cflags = ["-Wall", "-std=c11", "-fPIC"]
 

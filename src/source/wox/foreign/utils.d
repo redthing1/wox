@@ -46,7 +46,7 @@ static struct Utils {
             auto command_result = executeShell(command);
             return command_result.output.idup;
         } catch (Exception e) {
-            wox_context.log.err("error executing shell command: `%s`: %s", command, e);
+            wox_context.wox_log.err("error executing shell command: `%s`: %s", command, e);
             return null;
         }
     }
