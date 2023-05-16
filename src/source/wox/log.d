@@ -24,6 +24,7 @@ struct Logger {
     public bool use_colors = true;
     public bool use_meta = true;
     public bool meta_timestamp = true;
+    public string source = null;
 
     this(Verbosity verbosity) {
         this.verbosity = verbosity;
@@ -35,6 +36,10 @@ struct Logger {
 
         auto sb = appender!string;
         sb ~= "[";
+        if (source !is null) {
+            sb ~= source;
+            sb ~= ":";
+        }
         sb ~= level_str;
         if (meta_timestamp) {
             sb ~= "/";

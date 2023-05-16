@@ -41,6 +41,7 @@ int main(string[] args) {
 	auto log = Logger(logger_verbosity);
 	log.use_colors = true;
 	log.meta_timestamp = false;
+	log.source = "wox";
 
 	auto env_vars = environment.toAA();
 
