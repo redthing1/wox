@@ -89,11 +89,10 @@ var upload_main_recipe = W.virtual_recipe(
     ]
 )
 
+var BUILD_RECIPES = obj_recipes + [main_recipe, compressed_recipe, clean_recipe, upload_main_recipe]
+var DEFAULT_RECIPE = main_recipe
+
 class Build {
-    recipes {
-        obj_recipes + [main_recipe, compressed_recipe, clean_recipe, upload_main_recipe]
-    }
-    default_recipe {
-        main_recipe
-    }
+    static recipes { BUILD_RECIPES }
+    static default_recipe { DEFAULT_RECIPE }
 }

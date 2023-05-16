@@ -13,4 +13,6 @@ public {
     import std.exception: enforce;
 
     import wren;
+
+    import wox.wren_utils;
 }

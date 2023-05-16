@@ -63,7 +63,7 @@ struct BindForeignW {
     extern(C) struct W {
         // cliopts() -> list[string]
         static void cliopts(WrenVM* vm) {
-            Utils.wren_write_string_list(vm, 0, wox_context.args, 1);
+            WrenUtils.wren_write_string_list(vm, 0, wox_context.args, 1);
         }
 
         // cliopt(name, default) -> string
@@ -123,12 +123,12 @@ struct BindForeignW {
             auto regex_str = pattern_str.replace("*", ".*");
             auto matching_files = Utils.recursive_listdir_matching(".", regex_str);
 
-            Utils.wren_write_string_list(vm, 0, matching_files, 1);
+            WrenUtils.wren_write_string_list(vm, 0, matching_files, 1);
         }
 
         // ext_add(paths: list, ext) -> list[string]
         static void ext_add(WrenVM* vm) {
-            auto paths = Utils.wren_read_string_list(vm, 1, 0);
+            auto paths = WrenUtils.wren_read_string_list(vm, 1, 0);
             auto ext = wrenGetSlotString(vm, 2).to!string;
 
             foreach (i, path; paths) {
@@ -136,12 +136,12 @@ struct BindForeignW {
                 paths[i] = path ~ ext;
             }
 
-            Utils.wren_write_string_list(vm, 0, paths, 1);
+            WrenUtils.wren_write_string_list(vm, 0, paths, 1);
         }
 
         // ext_replace(paths: list, ext, new_ext) -> list[string]
         static void ext_replace(WrenVM* vm) {
-            auto paths = Utils.wren_read_string_list(vm, 1, 0);
+            auto paths = WrenUtils.wren_read_string_list(vm, 1, 0);
             auto ext = wrenGetSlotString(vm, 2).to!string;
             auto new_ext = wrenGetSlotString(vm, 3).to!string;
 
@@ -150,12 +150,12 @@ struct BindForeignW {
                 paths[i] = path.replace(ext, new_ext);
             }
 
-            Utils.wren_write_string_list(vm, 0, paths, 1);
+            WrenUtils.wren_write_string_list(vm, 0, paths, 1);
         }
 
         // ext_remove(paths: list, ext) -> list[string]
         static void ext_remove(WrenVM* vm) {
-            auto paths = Utils.wren_read_string_list(vm, 1, 0);
+            auto paths = WrenUtils.wren_read_string_list(vm, 1, 0);
             auto ext = wrenGetSlotString(vm, 2).to!string;
 
             foreach (i, path; paths) {
@@ -170,12 +170,12 @@ struct BindForeignW {
                 }
             }
 
-            Utils.wren_write_string_list(vm, 0, paths, 1);
+            WrenUtils.wren_write_string_list(vm, 0, paths, 1);
         }
 
         // path_join(paths: list) -> string
         static void path_join(WrenVM* vm) {
-            auto paths = Utils.wren_read_string_list(vm, 1, 0);
+            auto paths = WrenUtils.wren_read_string_list(vm, 1, 0);
 
             auto joined_path = std.path.buildPath(paths);
 
@@ -188,7 +188,7 @@ struct BindForeignW {
 
             auto path_segments = path.split(std.path.dirSeparator);
 
-            Utils.wren_write_string_list(vm, 0, path_segments, 1);
+            WrenUtils.wren_write_string_list(vm, 0, path_segments, 1);
         }
 
         // path_dirname(path) -> string

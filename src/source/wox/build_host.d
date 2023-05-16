@@ -11,6 +11,7 @@ import core.stdc.string;
 
 import wox.log;
 import wox.foreign.binder;
+import wox.wren_utils;
 
 enum WOX_SCRIPT = import("wox.wren");
 
@@ -33,11 +34,13 @@ class BuildHost {
     ) {
         switch (errorType) with (WrenErrorType) {
         case WREN_ERROR_COMPILE: {
-                log.err("[wren] Error in %s at line %d: %s", module_.to!string, line, msg.to!string);
+                log.err("[wren] Error in %s at line %d: %s", module_.to!string, line, msg
+                        .to!string);
                 break;
             }
         case WREN_ERROR_STACK_TRACE: {
-                log.err("[wren] Error in %s at line %d: %s", module_.to!string, line, msg.to!string);
+                log.err("[wren] Error in %s at line %d: %s", module_.to!string, line, msg
+                        .to!string);
                 break;
             }
         case WREN_ERROR_RUNTIME: {
@@ -75,11 +78,53 @@ class BuildHost {
 
         // create the wox module
         log.trace("loading wox module");
-        auto woxModule = wrenInterpret(vm, WOX_MODULE.toStringz, WOX_SCRIPT.toStringz);
+        auto wox_run_result = wrenInterpret(vm, WOX_MODULE.toStringz, WOX_SCRIPT.toStringz);
+        if (wox_run_result != WREN_RESULT_SUCCESS) {
+            log.err("failed to load wox module");
+            return false;
+        }
 
         // run buildscript module
-        auto result = wrenInterpret(vm, BUILDSCRIPT_MODULE.toStringz, buildscript.toStringz);
+        auto buildscript_run_result = wrenInterpret(vm, BUILDSCRIPT_MODULE.toStringz, buildscript
+                .toStringz);
+        if (buildscript_run_result != WREN_RESULT_SUCCESS) {
+            log.err("failed to run buildscript module");
+            return false;
+        }
 
-        return false;
+        // ensure enough slots for what we're going to do
+        wrenEnsureSlots(vm, 2);
+        // get the Build static class that should have been declared in the buildscript
+        auto build_decl_slot = 0;
+        wrenGetVariable(vm, BUILDSCRIPT_MODULE.toStringz, "Build", build_decl_slot);
+        auto build_class_h = wrenGetSlotHandle(vm, build_decl_slot);
+        if (build_class_h == null) {
+            log.err("failed to get build instance handle from %s", BUILDSCRIPT_MODULE);
+            return false;
+        }
+
+        // get the data exposed by the Build declaration
+        // call Build.default_recipe static getter
+        wrenSetSlotHandle(vm, 0, build_class_h);
+        auto default_recipe_call_h = wrenMakeCallHandle(vm, "default_recipe");
+        auto default_recipe_call_result = wrenCall(vm, default_recipe_call_h);
+        if (default_recipe_call_result != WREN_RESULT_SUCCESS) {
+            log.err("failed to call Build.default_recipe: %s", default_recipe_call_result);
+            return false;
+        }
+        // get handle to the default recipe
+        auto default_recipe_h = wrenGetSlotHandle(vm, 0);
+        // call Build.recipes static getter to get the list of all recipes
+        wrenSetSlotHandle(vm, 0, build_class_h);
+        auto recipes_call_h = wrenMakeCallHandle(vm, "recipes");
+        auto recipes_call_result = wrenCall(vm, recipes_call_h);
+        if (recipes_call_result != WREN_RESULT_SUCCESS) {
+            log.err("failed to call Build.recipes: %s", recipes_call_result);
+            return false;
+        }
+        // slot 0 contains a list of recipe objects
+        auto all_recipes_h = WrenUtils.wren_read_handle_list(vm, 0, 1);
+
+        return true;
     }
 }
