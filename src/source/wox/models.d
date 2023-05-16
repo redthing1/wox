@@ -57,7 +57,7 @@ struct Recipe {
             if (output.name == footprint.name) {
                 // we found a matching name, check if the reality matches
                 // if the reality is any, then yeah sure
-                if (output.reality == Footprint.Reality.Any) {
+                if (footprint.reality == Footprint.Reality.Any) {
                     return true;
                 }
                 // otherwise, check if the realities match

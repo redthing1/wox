@@ -155,18 +155,18 @@ class BuildHost {
         if (requested_targets.length > 0) {
             // ensure we have recipes for all the targets
             foreach (target; requested_targets) {
-                log.trace("looking for recipe that can build target %s", target);
+                log.trace("looking for recipe matching requested target %s", target);
                 bool candidate_found = false;
                 foreach (recipe; all_recipes) {
                     if (recipe.can_build_target(target)) {
-                        log.trace("found recipe that can build target %s: %s", target, recipe);
+                        log.trace("found recipe for requested target %s: %s", target, recipe);
                         candidate_recipes ~= recipe;
                         candidate_found = true;
                     }
                 }
 
                 if (!candidate_found) {
-                    log.err("no recipe found that can build target %s", target);
+                    log.err("no recipe found for requested target %s", target);
                     return false;
                 }
             }
