@@ -21,7 +21,7 @@ for (lib in libs) {
     cflags.add("-l%(lib)")
 }
 // just for fun, get all libc
-var libc_sos = W.shell("ldconfig -p | grep libc.so | awk '{print $4}'").split("\n")
+var libc_sos = W.shell("ldconfig -p | grep libc.so | awk '{print $4}'").trim().split("\n")
 W.log_inf("available libc.so's: %(libc_sos)")
 
 // srcs
