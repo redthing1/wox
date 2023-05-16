@@ -126,10 +126,8 @@ class BuildHost {
             log.err("failed to call Build.default_recipe: %s", default_recipe_call_result);
             return false;
         }
-        // get handle to the default recipe (recipe object)
-        auto default_recipe_h = wrenGetSlotHandle(vm, 0);
-        auto default_recipe_type = wrenGetSlotType(vm, 0);
-        enforce(default_recipe_type == WREN_TYPE_UNKNOWN, "default recipe is not an object");
+        enforce(wrenGetSlotType(vm, 0) == WREN_TYPE_STRING, "default recipe is not a string");
+        auto default_recipe_name = wrenGetSlotString(vm, 0).to!string;
 
         // call Build.recipes static getter to get the list of all recipes
         wrenSetSlotHandle(vm, 0, build_class_h);
@@ -142,9 +140,15 @@ class BuildHost {
         // slot 0 contains a list of recipe objects
         auto all_recipes_h = WrenUtils.wren_read_handle_list(vm, 0, 1);
 
-        auto default_recipe = ModelsFromWren.convert_recipe_from_wren(vm, default_recipe_h);
         auto all_recipes = all_recipes_h
             .map!(x => ModelsFromWren.convert_recipe_from_wren(vm, x)).array;
+        // find the default recipe in the list
+        auto maybe_default_recipe = all_recipes.filter!(x => x.name == default_recipe_name);
+        if (maybe_default_recipe.empty) {
+            log.err("specified default recipe %s not found", default_recipe_name);
+            return false;
+        }
+        auto default_recipe = maybe_default_recipe.front;
 
         foreach (recipe; all_recipes) {
             log.trace("recipe:\n%s", recipe);
@@ -471,8 +475,6 @@ class BuildHost {
                     return Nullable!Recipe(recipe);
                 }
             }
-            // enforce(false, format("no recipe found that can build footprint %s", footprint));
-            // assert(0);
             return Nullable!Recipe.init;
         }
 
