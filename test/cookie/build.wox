@@ -1,0 +1,22 @@
+import "wox" for W, R
+
+var TARGET_MAIN = "./cookie.txt"
+
+var srcs = W.glob("./src/*.txt")
+
+var cookie_recipe = W.recipe(
+    "cookie",
+    srcs,
+    ["cookie.txt"],
+    [
+        R.c("cat %(W.join(srcs)) > %(TARGET_MAIN)"),
+    ]
+)
+
+var BUILD_RECIPES = [cookie_recipe]
+
+class Build {
+    static recipes { BUILD_RECIPES }
+    static default_recipe { "cookie" }
+}
+

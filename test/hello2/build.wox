@@ -98,10 +98,9 @@ var all_recipe = W.meta_recipe(
     [main_recipe, compressed_recipe]
 )
 
-var BUILD_RECIPES = obj_recipes + [main_recipe, compressed_recipe, clean_recipe, upload_main_recipe]
-var DEFAULT_RECIPE = all_recipe
+var BUILD_RECIPES = obj_recipes + [main_recipe, compressed_recipe, clean_recipe, upload_main_recipe, all_recipe]
 
 class Build {
     static recipes { BUILD_RECIPES }
-    static default_recipe { DEFAULT_RECIPE }
+    static default_recipe { "all" }
 }
