@@ -5,18 +5,16 @@ import std.file;
 import std.path;
 import std.conv;
 import std.string;
-import wren;
 import core.stdc.stdio;
 import core.stdc.string;
+import std.exception : enforce;
+import wren;
 
 import wox.log;
+import wox.models;
+import wox.wren_integration;
 import wox.foreign.binder;
 import wox.wren_utils;
-
-enum WOX_SCRIPT = import("wox.wren");
-
-enum WOX_MODULE = "wox";
-enum BUILDSCRIPT_MODULE = "build";
 
 class BuildHost {
     static Logger log;
@@ -112,8 +110,11 @@ class BuildHost {
             log.err("failed to call Build.default_recipe: %s", default_recipe_call_result);
             return false;
         }
-        // get handle to the default recipe
+        // get handle to the default recipe (recipe object)
         auto default_recipe_h = wrenGetSlotHandle(vm, 0);
+        auto default_recipe_type = wrenGetSlotType(vm, 0);
+        enforce(default_recipe_type == WREN_TYPE_UNKNOWN, "default recipe is not an object");
+
         // call Build.recipes static getter to get the list of all recipes
         wrenSetSlotHandle(vm, 0, build_class_h);
         auto recipes_call_h = wrenMakeCallHandle(vm, "recipes");
@@ -124,6 +125,8 @@ class BuildHost {
         }
         // slot 0 contains a list of recipe objects
         auto all_recipes_h = WrenUtils.wren_read_handle_list(vm, 0, 1);
+
+        auto default_recipe = ModelsFromWren.convert_recipe_from_wren(vm, default_recipe_h);
 
         return true;
     }

@@ -36,16 +36,16 @@ class W {
     // foreign static virtual_recipe(name, inputs, steps)      // virtual recipe
 
     static recipe(inputs, outputs, steps) {
-        Recipe.new(null, as_footprints_(inputs), as_footprints_(outputs), steps)
+        return Recipe.new(null, as_footprints_(inputs), as_footprints_(outputs), steps)
     }
 
     static recipe(name, inputs, outputs, steps) {
-        Recipe.new(name, as_footprints_(inputs), as_footprints_(outputs), steps)
+        return Recipe.new(name, as_footprints_(inputs), as_footprints_(outputs), steps)
     }
 
     static virtual_recipe(name, inputs, steps) {
         var virtual_output = name
-        Recipe.new(
+        return Recipe.new(
             name,
             as_footprints_(inputs),
             as_footprints_([virtual_output], FootprintReality.virtual),
@@ -54,7 +54,7 @@ class W {
     }
 
     static as_footprints_(names) {
-        as_footprints_(names, FootprintReality.unknown)
+        return as_footprints_(names, FootprintReality.unknown)
     }
 
     static as_footprints_(names, reality) {
@@ -62,7 +62,7 @@ class W {
         for (name in names) {
             footprints.add(Footprint.new(name, reality))
         }
-        footprints
+        return footprints
     }
 }
 
@@ -79,6 +79,9 @@ class Footprint {
         _name = name
         _reality = reality
     }
+
+    name { _name }
+    reality { _reality }
 }
 
 // represents a way to create outputs from inputs by following steps
@@ -89,6 +92,11 @@ class Recipe {
         _outputs = outputs
         _steps = steps
     }
+
+    name { _name }
+    inputs { _inputs }
+    outputs { _outputs }
+    steps { _steps }
 }
 
 class Command {
@@ -101,6 +109,6 @@ class Command {
 // data stuff for recipes: these don't actually execute but rather return data
 class R {
     static c(cmd) {
-        Command.new(cmd)
+        return Command.new(cmd)
     }
 }
