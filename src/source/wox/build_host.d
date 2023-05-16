@@ -257,12 +257,11 @@ class BuildHost {
         // they are ordered with the top-level targets first, so we can work backwards
 
         // auto task_pool = new TaskPool(options.n_jobs);
+        defaultPoolThreads = options.n_jobs;
         shared bool[Recipe] visited_recipes;
 
-        // defaultPoolThreads = options.n_jobs;
-        // log.trace("executing solved recipes with %s jobs", options.n_jobs);
-
-        log.trace("executing solved recipes");
+        log.trace("executing solved recipes with %s jobs", options.n_jobs);
+        // log.trace("executing solved recipes");
 
         foreach (i, ref node; toposorted_queue) {
             if (node.recipe in visited_recipes) {
@@ -270,26 +269,29 @@ class BuildHost {
             }
             visited_recipes[node.recipe] = true;
 
-            auto result = execute_node_recipe(node);
-            if (!result) {
-                return false;
-            }
+            // auto result = execute_node_recipe(node);
+            // if (!result) {
+            //     return false;
+            // }
+
+            auto execute_task = task(&execute_node_recipe, node, log);
+            taskPool.put(execute_task);
         }
 
         return true;
     }
 
-    bool execute_node_recipe(SolverNode node) {
+    bool execute_node_recipe(SolverNode node, Logger log) {
         auto recipe = node.recipe;
+        // logger needs to be passed when multithreading
 
-        // auto worker_ix = 0;
-        // log.trace(" [%s] maybe build %s with recipe '%s' <- %s",
-        //     worker_ix,
-        //     node.recipe.outputs, node.recipe.name, node.recipe.inputs
-        // );
-        log.trace(" maybe build %s with recipe '%s' <- %s",
-            node.recipe.outputs, node.recipe.name, node.recipe.inputs
-        );
+        auto worker_ix = taskPool.workerIndex;
+        synchronized {
+            log.trace(" [%s] maybe build %s with recipe '%s' <- %s",
+                worker_ix,
+                node.recipe.outputs, node.recipe.name, node.recipe.inputs
+            );
+        }
 
         auto file_inputs = node.recipe.inputs
             .filter!(x => x.reality == Footprint.Reality.File).array;
@@ -299,7 +301,9 @@ class BuildHost {
         // 1. ensure all file inputs exist
         foreach (input; file_inputs) {
             if (!std.file.exists(input.name)) {
-                log.err("file input '%s' does not exist", input.name);
+                synchronized {
+                    log.err("  [%s] file input '%s' does not exist", worker_ix, input.name);
+                }
                 return false;
             }
         }
@@ -320,17 +324,24 @@ class BuildHost {
             auto newest_file_input_modtime = file_input_modtimes.maxElement;
             auto oldest_file_output_modtime = file_output_modtimes.minElement;
             if (newest_file_input_modtime < oldest_file_output_modtime) {
-                log.trace("  skipping %s because all outputs are newer than all inputs",
-                    node.recipe.name);
+                synchronized {
+                    log.trace("  [%s] skipping %s because all outputs are newer than all inputs",
+                        worker_ix, node.recipe.name);
+                }
                 return true;
             }
         }
 
         foreach (step; recipe.steps) {
-            log.trace("  executing step %s", step);
+            // log.trace("  executing step %s", step);
+            synchronized {
+                log.trace("  [%s] executing step %s", worker_ix, step);
+            }
             auto step_result = execute_step(step);
             if (!step_result) {
-                log.err("   error executing step %s", step);
+                synchronized {
+                    log.err("  [%s] error executing step %s", worker_ix, step);
+                }
                 return false;
             }
         }
@@ -338,8 +349,10 @@ class BuildHost {
         // all steps finished, check that all outputs exist
         foreach (output; file_outputs) {
             if (!std.file.exists(output.name)) {
-                log.err("  output '%s' does not exist after executing recipe '%s'",
-                    output.name, recipe.name);
+                synchronized {
+                    log.err("  [%s] output '%s' does not exist after executing recipe '%s'",
+                        worker_ix, output.name, recipe.name);
+                }
                 return false;
             }
         }
