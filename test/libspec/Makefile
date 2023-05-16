@@ -107,11 +107,11 @@ endif
 
 $(OUTPUT).a : $(OFILES)
 	@echo Building static library
-	@$(AR) rcs $@ $?
+	$(AR) rcs $@ $?
 
 $(SHARED) : $(OFILES)
 	@echo Building shared library
-	@$(CC) -shared $(LDFLAGS) -o $@ $?
+	$(CC) -shared $(LDFLAGS) -o $@ $?
  
 #-------------------------------------------------------------------------------
 # Compile Targets for C/C++
@@ -119,13 +119,13 @@ $(SHARED) : $(OFILES)
  
 #-------------------------------------------------------------------------------
 %.o : %.cpp
-	@echo Compiling $(notdir $<)
-	@$(CXX) -MMD -MF $*.d -MP $(CFLAGS) -c $< -o $*.o
+	echo Compiling $(notdir $<)
+	$(CXX) -MMD -MF $*.d -MP $(CFLAGS) -c $< -o $*.o
 
 #-------------------------------------------------------------------------------
 %.o : %.c
-	@echo Compiling $(notdir $<)
-	@$(CC) -MMD -MF $*.d -MP $(CFLAGS) -c $< -o $*.o
+	echo Compiling $(notdir $<)
+	$(CC) -MMD -MF $*.d -MP $(CFLAGS) -c $< -o $*.o
 
 -include $(DEPENDS) 
 #-------------------------------------------------------------------------------

@@ -1,0 +1,98 @@
+import "wox" for W, R
+
+var TARGET_NAME     = "libspec"
+var BUILD_DIR       = "obj"
+var RELEASE_DIR     = "lib"
+var SOURCE_DIR      = "src"
+var INCLUDE_DIRS    = ["include"]
+
+// args
+var debug = W.cliopt_bool("-g", false)
+var cc = W.cliopt("--cc", "gcc")
+var ar = W.cliopt("--ar", "ar")
+var objcopy = W.cliopt("--objcopy", "objcopy")
+
+// cflags
+var cflags = ["-Wall", "-std=c11", "-fPIC"]
+
+if (debug) cflags.add("-g")
+cflags.add("-O2")
+
+// srcs
+var srcs = W.glob("./%(SOURCE_DIR)/*.c")
+// objs
+var objs = W.ext_replace(srcs, ".c", ".o")
+W.log_inf("objs: %(objs)")
+
+// includes
+for (dir in INCLUDE_DIRS) {
+    cflags.add("-I%(dir)")
+}
+
+// return the recipes
+
+// recipes for each .c -> .o
+var obj_recipes = []
+for (src_ix in 0...srcs.count) {
+    var c_file = srcs[src_ix]
+    var o_file = objs[src_ix]
+
+    var obj_recipe = W.recipe(
+        o_file,
+        [c_file],
+        [o_file],
+        [
+            // run gcc to compile a single .c file into a .o file
+            R.c("%(cc) %(W.join(cflags)) -c %(c_file) -o %(o_file)"),
+        ]
+    )
+    obj_recipes.add(obj_recipe)
+}
+
+var TARGET_SHARED = "%(RELEASE_DIR)/%(TARGET_NAME).so"
+var shared_recipe = W.recipe(
+    "shared_lib",
+    objs,
+    [TARGET_SHARED],
+    [
+        R.c("mkdir -p %(RELEASE_DIR)"),
+        // link all the .o files into the shared library
+        R.c("%(cc) %(W.join(cflags)) -shared -o %(TARGET_SHARED) %(W.join(objs))"),
+    ]
+)
+
+var TARGET_STATIC = "%(RELEASE_DIR)/%(TARGET_NAME).a"
+var static_recipe = W.recipe(
+    "static_lib",
+    objs,
+    [TARGET_STATIC],
+    [
+        R.c("mkdir -p %(RELEASE_DIR)"),
+        // link all the .o files into the static library
+        R.c("%(ar) rcs %(TARGET_STATIC) %(W.join(objs))"),
+    ]
+)
+
+// virtual recipe for cleaning
+var clean_recipe = W.virtual_recipe(
+    "clean",
+    [],
+    [
+        // remove all the .o files and the targets
+        R.c("rm -rf %(W.join(objs))"),
+        R.c("rm -rf %(BUILD_DIR) %(RELEASE_DIR)"),
+    ]
+)
+
+// 6. a default all recipe
+var all_recipe = W.meta_recipe(
+    "all",
+    [shared_recipe, static_recipe]
+)
+
+var BUILD_RECIPES = obj_recipes + [shared_recipe, static_recipe, clean_recipe, all_recipe]
+
+class Build {
+    static recipes { BUILD_RECIPES }
+    static default_recipe { "all" }
+}
