@@ -63,6 +63,7 @@ struct Logger {
         }
 
         writefln("%s", log);
+        stdout.flush();
     }
 
     public void put(T...)(T args, Verbosity level) {
