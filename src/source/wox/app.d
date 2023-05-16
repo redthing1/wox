@@ -10,7 +10,7 @@ import std.process;
 import commandr;
 import std.parallelism : totalCPUs;
 
-import wox.build_host;
+import wox.host.builder;
 import wox.log;
 
 enum DEFAULT_BUILDFILE_NAME = "build.wox";
@@ -69,13 +69,13 @@ int main(string[] args) {
 	auto buildfile_contents = std.file.readText(buildfile_path);
 
 	// configure build host
-	auto build_host_options = BuildHost.Options.init;
+	auto build_host_options = WoxBuilder.Options.init;
 	build_host_options.graphviz_file = a.option("graphviz_file");
 	build_host_options.n_jobs = a.option("jobs").to!int;
 	build_host_options.enable_cache = a.flag("cache");
 
 	// run build in host
-	auto host = new BuildHost(log, build_host_options);
+	auto host = new WoxBuilder(log, build_host_options);
 	auto build_targets = a.args("targets");
 	auto build_success = host.build(buildfile_contents, build_targets, workdir, buildfile_args, env_vars);
 
