@@ -44,9 +44,9 @@ int main(string[] args) {
 
 	auto env_vars = environment.toAA();
 
-	log.info("invocation: %s", args);
-	log.info("  build file: %s", a.option("file"));
-	log.info("  targets: %s", a.args("targets"));
+	log.trace("invocation: %s", args);
+	log.trace("  build file: %s", a.option("file"));
+	log.trace("  targets: %s", a.args("targets"));
 
 	// change to working directory
 	auto workdir = a.option("workdir");
@@ -55,7 +55,7 @@ int main(string[] args) {
 		return 1;
 	}
 
-	log.info("changing to working directory '%s'", workdir);
+	log.trace("changing to working directory '%s'", workdir);
 
 	std.file.chdir(workdir);
 
