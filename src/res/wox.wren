@@ -35,6 +35,14 @@ class W {
     foreign static join(list, sep)                          // join list with sep
     static join(list) { join(list, " ") }                   // join list with default sep
 
+    static zip(seq1, seq2) {
+        var ret = []
+        for (i in range(0, min(seq1.length, seq2.length))) {
+            ret.add([seq1[i], seq2[i]])
+        }
+        return ret
+    }
+
     // recipes
     // foreign static recipe(inputs, outputs, steps)           // recipe
     // foreign static recipe(name, inputs, outputs, steps)     // named recipe
