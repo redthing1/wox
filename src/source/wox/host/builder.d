@@ -36,6 +36,7 @@ class WoxBuilder {
         string graphviz_file = null;
         bool enable_cache = false;
         bool list_targets = false;
+        bool dry_run = false;
     }
 
     Options options;
@@ -48,6 +49,11 @@ class WoxBuilder {
         // if cache is enabled, open the database
         if (options.enable_cache) {
             db = new WoxDatabase(".wox.db");
+        }
+
+        if (options.dry_run) {
+            // dry run implies 1 job
+            options.n_jobs = 1;
         }
     }
 
@@ -341,6 +347,21 @@ class WoxBuilder {
                 }
             }
 
+            if (options.dry_run) {
+                auto sb = appender!string;
+                sb ~= format("[dry run] recipe '%s'\n", node.recipe.name);
+                sb ~= format("  inputs  : %s\n", node.recipe.inputs);
+                sb ~= format("  outputs : %s\n", node.recipe.outputs);
+                if (!node.recipe.steps.empty) {
+                    sb ~= ("  steps:\n");
+                    foreach (step; node.recipe.steps) {
+                        sb ~= format("    %s\n", step);
+                    }
+                }
+                writefln(sb.data.stripRight);
+                continue;
+            }
+
             if (use_single_thread) {
                 auto result = execute_node_recipe(task_pool, node, log);
                 if (!result) {
@@ -468,6 +489,10 @@ class WoxBuilder {
             }
 
             foreach (step; recipe.steps) {
+                // if (options.dry_run) {
+                //     log.warn("  [%s] would execute %s", worker_ix, step);
+                //     continue;
+                // }
                 synchronized {
                     log.trace("  [%s] executing step %s", worker_ix, step);
                 }
@@ -482,6 +507,7 @@ class WoxBuilder {
 
             // all steps finished, check that all outputs exist
             foreach (output; file_outputs) {
+                // if (options.dry_run) break; // don't check output existence in dry run
                 if (!std.file.exists(output.name)) {
                     synchronized {
                         log.err("  [%s] output '%s' does not exist after executing recipe '%s'",

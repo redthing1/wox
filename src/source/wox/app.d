@@ -36,6 +36,7 @@ int main(string[] args) {
 				.defaultValue(totalCPUs.to!string))
 		.add(new Flag("k", "cache", "enable cache database"))
 		.add(new Flag("l", "list_targets", "list targets in build file"))
+		.add(new Flag("n", "dry_run", "don't actually run any commands"))
 		.parse(wox_args);
 
 	auto verbose_count = min(a.occurencesOf("verbose"), 3);
@@ -78,6 +79,7 @@ int main(string[] args) {
 	build_host_options.n_jobs = a.option("jobs").to!int;
 	build_host_options.enable_cache = a.flag("cache");
 	build_host_options.list_targets = a.flag("list_targets");
+	build_host_options.dry_run = a.flag("dry_run");
 
 	// run build in host
 	auto host = new WoxBuilder(log, build_host_options);
