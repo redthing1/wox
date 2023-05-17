@@ -39,21 +39,21 @@ struct ParsedArgs {
             arguments, options, flags);
     }
 
-    string arg(int index) @nogc @safe nothrow {
+    string arg(int index) {
         if (index < arguments.length) {
             return arguments[index];
         }
         return null;
     }
 
-    string opt(string name) @nogc @safe nothrow {
+    string opt(string name) {
         if (name in options) {
             return options[name];
         }
         return null;
     }
 
-    bool flag(string name) @nogc @safe nothrow {
+    bool flag(string name) {
         foreach (f; flags) {
             if (f == name) {
                 return true;
