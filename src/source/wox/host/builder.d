@@ -164,7 +164,7 @@ class WoxBuilder {
         Recipe[] all_recipes;
         foreach (i, recipe_h; all_recipes_h) {
             auto maybe_recipe = models_converter.convert_recipe_from_wren(recipe_h);
-            if (maybe_recipe.any) {
+            if (!maybe_recipe.any) {
                 log.err(
                     "failed to load recipe %d."
                     ~ " please ensure that W.recipe(...) is invoked with the correct argument types.",
