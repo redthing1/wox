@@ -13,6 +13,7 @@ import std.parallelism : totalCPUs;
 import wox.host.builder;
 import wox.log;
 
+enum APP_VERSION = "v0.2.0";
 enum DEFAULT_BUILDFILE_NAME = "build.wox";
 
 int main(string[] args) {
@@ -21,7 +22,7 @@ int main(string[] args) {
 	auto wox_args = split_args[0];
 	auto buildfile_args = split_args.length > 1 ? split_args[1] : [];
 
-	auto a = new Program("wox", "0.1").summary("A flexible recipe build system inspired by Make")
+	auto a = new Program("wox", APP_VERSION).summary("A flexible recipe build system inspired by Make")
 		.author("redthing1")
 		.add(new Argument("targets", "targets to build").repeating.optional)
 		.add(new Flag("v", "verbose", "turns on more verbose output").repeating)
