@@ -446,9 +446,11 @@ class WoxBuilder {
                         }
                     }
                 } else {
-                    synchronized {
-                        log.dbg("  [%s] not all outputs of '%s' exist, build required",
-                            worker_ix, node.recipe.name);
+                    if (!file_outputs.empty) {
+                        synchronized {
+                            log.dbg("  [%s] not all outputs of '%s' exist, build required",
+                                worker_ix, node.recipe.name);
+                        }
                     }
                 }
             }
