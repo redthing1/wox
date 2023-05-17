@@ -1,5 +1,6 @@
 module wox.wren.wren_ext;
 
+import std.stdio;
 import std.string;
 import std.array;
 import std.conv;
@@ -28,13 +29,16 @@ struct WrenExt {
         return wrenMakeCallHandle(vm, signature.toStringz);
     }
 
-    WrenHandle* get_global_var_handle(string module_name, string var_name) {
+    WrenType get_global_var_type(string module_name, string var_name) {
         wrenEnsureSlots(vm, 1);
         wrenGetVariable(vm, module_name.toStringz, var_name.toStringz, 0);
-        // make a handle and return it
-        auto slot_handle = wrenGetSlotHandle(vm, 0);
-        enforce(slot_handle != null, "slot handle is null");
-        return slot_handle;
+        return wrenGetSlotType(vm, 0);
+    }
+
+    WrenHandle* get_global_var_handle(string module_name, string var_name, WrenType expected_type) {
+        auto var_type = get_global_var_type(module_name, var_name);
+        enforce(var_type == expected_type, "global var type is not expected type");
+        return wrenGetSlotHandle(vm, 0);
     }
 
     void get_ret_handle(WrenHandle* handle) {

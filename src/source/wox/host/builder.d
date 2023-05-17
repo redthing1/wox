@@ -137,7 +137,11 @@ class WoxBuilder {
 
         auto wren_ext = new WrenExt(vm);
 
-        auto build_class_h = wren_ext.get_global_var_handle(BUILDSCRIPT_MODULE, "Build");
+        if (wren_ext.get_global_var_type(BUILDSCRIPT_MODULE, "Build") != WREN_TYPE_UNKNOWN) {
+            log.err("buildscript module does not export a Build class");
+            return false;
+        }
+        auto build_class_h = wren_ext.get_global_var_handle(BUILDSCRIPT_MODULE, "Build", WREN_TYPE_UNKNOWN);
         auto default_recipe_name = wren_ext.call_prop_string(build_class_h, "default_recipe");
         auto all_recipes_h = wren_ext.call_prop_handle_list(build_class_h, "recipes");
 
