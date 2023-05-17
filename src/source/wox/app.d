@@ -2,13 +2,14 @@ module wox.app;
 
 import std.stdio;
 import std.string;
-import std.file;
 import std.algorithm;
 import std.array;
 import std.conv;
 import std.process;
-import commandr;
+static import std.file;
+static import std.path;
 import std.parallelism : totalCPUs;
+import commandr;
 
 import wox.host.builder;
 import wox.log;
@@ -67,6 +68,7 @@ int main(string[] args) {
 		writefln("Error: build file '%s' does not exist", buildfile_path);
 		return 1;
 	}
+	auto buildfile_basename = std.path.baseName(buildfile_path);
 	auto buildfile_contents = std.file.readText(buildfile_path);
 
 	// configure build host
@@ -78,7 +80,9 @@ int main(string[] args) {
 	// run build in host
 	auto host = new WoxBuilder(log, build_host_options);
 	auto build_targets = a.args("targets");
-	auto build_success = host.build(buildfile_contents, build_targets, workdir, buildfile_args, env_vars);
+	auto build_success = host.build(
+		buildfile_basename, buildfile_contents, build_targets, workdir, buildfile_args, env_vars
+	);
 
 	if (!build_success) {
 		log.error("build failed");

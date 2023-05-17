@@ -95,7 +95,10 @@ class WoxBuilder {
         return WrenLoadModuleResult(module_source.toStringz);
     }
 
-    bool build(string buildscript, string[] requested_targets, string cwd, string[] args, string[string] env) {
+    bool build(
+        string buildscript_module_name, string buildscript, string[] requested_targets,
+        string cwd, string[] args, string[string] env
+    ) {
         // log.trace("buildscript:\n%s", buildscript);
 
         // // vm info
@@ -129,7 +132,7 @@ class WoxBuilder {
         }
 
         // run buildscript module
-        auto buildscript_run_result = wrenInterpret(vm, BUILDSCRIPT_MODULE.toStringz, buildscript
+        auto buildscript_run_result = wrenInterpret(vm, buildscript_module_name.toStringz, buildscript
                 .toStringz);
         if (buildscript_run_result != WREN_RESULT_SUCCESS) {
             log.err("failed to run buildscript module");
@@ -138,11 +141,11 @@ class WoxBuilder {
 
         auto wren_ext = new WrenExt(vm);
 
-        if (wren_ext.get_global_var_type(BUILDSCRIPT_MODULE, "Build") != WREN_TYPE_UNKNOWN) {
+        if (wren_ext.get_global_var_type(buildscript_module_name, "Build") != WREN_TYPE_UNKNOWN) {
             log.err("buildscript module does not export a Build class");
             return false;
         }
-        auto build_class_h = wren_ext.get_global_var_handle(BUILDSCRIPT_MODULE, "Build", WREN_TYPE_UNKNOWN);
+        auto build_class_h = wren_ext.get_global_var_handle(buildscript_module_name, "Build", WREN_TYPE_UNKNOWN);
         auto default_recipe_name = wren_ext.call_prop_string(build_class_h, "default_recipe");
         auto all_recipes_h = wren_ext.call_prop_handle_list(build_class_h, "recipes");
 
