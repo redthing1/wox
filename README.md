@@ -16,7 +16,37 @@ wox is designed to provide all the power and flexibility of arbitrary recipe-bas
 ## see a real example
 
 ```wren
-TODO
+import "wox" for W, R
+
+var TARGET = "./hello"
+
+var cc = W.cliopt("-cc", "gcc")
+var cflags = ["-Wall", "-std=c11"]
+
+var srcs = W.glob("./*.c")
+var objs = W.ext_replace(srcs, ".c", ".o")
+var src_obj_pairs = W.zip(srcs, objs)
+
+var obj_recipes = src_obj_pairs.map { |x|
+    W.recipe(x[1], [x[0]], [x[1]], 
+        [ R.c("%(cc) %(W.join(cflags)) -c %(x[0]) -o %(x[1])") ]
+    )
+}
+
+var main_recipe = W.recipe("main", objs, [TARGET], 
+    [ R.c("%(cc) %(W.join(cflags)) %(W.join(objs)) -o %(TARGET)") ]
+)
+var clean_recipe = W.virtual_recipe("clean", [],
+    [ R.c("rm -f %(W.join(objs)) %(TARGET)") ]
+)
+var all_recipe = W.meta_recipe("all", [main_recipe])
+
+var BUILD_RECIPES = obj_recipes + [main_recipe, clean_recipe, all_recipe]
+
+class Build {
+    static recipes { BUILD_RECIPES }
+    static default_recipe { "all" }
+}
 ```
 
 ## build
