@@ -465,8 +465,9 @@ class WoxBuilder {
                     return false;
                 }
             }
+            auto any_file_inputs = !file_inputs.empty;
             // check if all outputs exist
-            bool all_outputs_exist = file_outputs.length > 0 && file_outputs.all!(
+            auto all_outputs_exist = !file_outputs.empty && file_outputs.all!(
                 x => std.file.exists(x.name));
 
             if (cache_dirty) {
@@ -474,7 +475,7 @@ class WoxBuilder {
             } else {
                 // recipe cache is clean
 
-                if (all_outputs_exist) {
+                if (any_file_inputs && all_outputs_exist) {
                     // check if modtimes allow us to skip this recipe
 
                     auto file_input_modtimes = file_inputs
@@ -522,17 +523,15 @@ class WoxBuilder {
             }
 
             foreach (step; recipe.steps) {
-                // if (options.dry_run) {
-                //     log.warn("  [%s] would execute %s", worker_ix, step);
-                //     continue;
-                // }
                 synchronized {
                     log.trace("  [%s] executing step %s", worker_ix, step);
                 }
                 auto step_result = execute_step(log, step);
                 if (!step_result) {
                     synchronized {
-                        log.err("  [%s] error executing step %s", worker_ix, step);
+                        // log.err("  [%s] error executing step %s", worker_ix, step);
+                        log.err("  [%s] error executing recipe '%s': step %s failed",
+                            worker_ix, node.recipe.name, step);
                     }
                     return false;
                 }
