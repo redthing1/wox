@@ -23,12 +23,28 @@ struct Footprint {
     }
 }
 
-struct CommandStep {
-    string cmd;
+struct StepInfo {
+    enum Type {
+        Command = 0,
+        Log = 1,
+    }
+
+    Type type;
+    string data;
     bool is_quiet = false;
 
+    @property bool is_command() const { return type == Type.Command; }
+    @property bool is_log() const { return type == Type.Log; }
+
     string toString() const {
-        return format("cmd(%s)", cmd);
+        switch (type) {
+        case Type.Command:
+            return format("cmd(%s)", data);
+        case Type.Log:
+            return format("log(%s)", data);
+        default:
+            assert(0, "unknown step type");
+        }
     }
 }
 
@@ -36,7 +52,7 @@ struct Recipe {
     string name;
     Footprint[] inputs;
     Footprint[] outputs;
-    CommandStep[] steps;
+    StepInfo[] steps;
 
     string toString() const {
         auto sb = appender!string;
@@ -46,7 +62,7 @@ struct Recipe {
         sb ~= format("  outputs: %s\n", outputs);
         sb ~= format("  steps:");
         foreach (step; steps) {
-            sb ~= format("\n    %s", step.cmd);
+            sb ~= format("\n    %s", step);
         }
         sb ~= "\n}";
 
@@ -122,10 +138,11 @@ struct ModelsFromWrenConverter {
         return ret;
     }
 
-    CommandStep convert_step_from_wren(WrenHandle* step_h) {
-        CommandStep ret;
+    StepInfo convert_step_from_wren(WrenHandle* step_h) {
+        StepInfo ret;
 
-        ret.cmd = wren_ext.call_prop_string(step_h, "cmd");
+        ret.type = cast(StepInfo.Type) cast(int) wren_ext.call_prop_num(step_h, "type");
+        ret.data = wren_ext.call_prop_nullable_string(step_h, "data");
         ret.is_quiet = wren_ext.call_prop_bool(step_h, "quiet");
 
         return ret;

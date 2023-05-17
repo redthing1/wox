@@ -454,7 +454,6 @@ class WoxBuilder {
             }
 
             foreach (step; recipe.steps) {
-                // log.trace("  executing step %s", step);
                 synchronized {
                     log.trace("  [%s] executing step %s", worker_ix, step);
                 }
@@ -488,25 +487,40 @@ class WoxBuilder {
         }
     }
 
-    bool execute_step(Logger log, CommandStep step) {
-        import std.process;
+    bool execute_step(Logger log, StepInfo step) {
+        switch (step.type) {
+        case StepInfo.Type.Command: {
+                import std.process;
 
-        try {
-            if (!step.is_quiet) {
-                log.source = "cmd";
-                synchronized {
-                    log.info("%s", step.cmd);
+                try {
+                    if (!step.is_quiet) {
+                        log.source = "cmd";
+                        synchronized {
+                            log.info("%s", step.data);
+                        }
+                    }
+                    auto command_result = executeShell(step.data);
+                    if (command_result.status != 0) {
+                        log.err("error executing shell command: `%s`:\n%s", step.data, command_result
+                                .output);
+                        return false;
+                    }
+                    return true;
+                } catch (Exception e) {
+                    log.err("exception executing shell command: `%s`: %s", step.data, e);
+                    return false;
                 }
             }
-            auto command_result = executeShell(step.cmd);
-            if (command_result.status != 0) {
-                log.err("error executing shell command: `%s`:\n%s", step.cmd, command_result.output);
-                return false;
+        case StepInfo.Type.Log: {
+                log.source = "log";
+                synchronized {
+                    log.info("%s", step.data);
+                }
+                return true;
             }
-            return true;
-        } catch (Exception e) {
-            log.err("exception executing shell command: `%s`: %s", step.cmd, e);
-            return false;
+        default:
+            assert(0, "unknown step type");
         }
+
     }
 }

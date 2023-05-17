@@ -142,12 +142,17 @@ class Recipe {
     steps { _steps }
 }
 
-class Command {
-    construct new(cmd) {
-        _cmd = cmd
+var STEP_TYPE_RUN = 0
+var STEP_TYPE_LOG = 1
+
+class StepInfo {
+    construct new(type, data) {
+        _type = type
+        _data = data
         _quiet = false
     }
-    cmd { _cmd }
+    type { _type }
+    data { _data }
     quiet { _quiet }
     quiet=(value) { _quiet = value }
 }
@@ -155,11 +160,20 @@ class Command {
 // data stuff for recipes: these don't actually execute but rather return data
 class R {
     static c(cmd) {
-        return Command.new(cmd)
+        return StepInfo.new(STEP_TYPE_RUN, cmd)
     }
     static cq(cmd) {
         var command = c(cmd)
         command.quiet = true
         return command
+    }
+
+    // alias for c
+    static run(cmd) {
+        return c(cmd)
+    }
+
+    static log(msg) {
+        return StepInfo.new(STEP_TYPE_LOG, msg)
     }
 }
