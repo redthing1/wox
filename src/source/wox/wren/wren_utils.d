@@ -51,14 +51,16 @@ static class WrenUtils {
         return list_item_handles;
     }
 
-    static void wren_release_handles(WrenVM* vm, WrenHandle*[] handles) {
-        foreach (handle; handles) {
-            wrenReleaseHandle(vm, handle);
+    static void wren_enforce(WrenVM* vm, lazy bool condition, lazy string message) {
+        if (!condition) {
+            // give wren an error
+            wrenSetSlotString(vm, 0, message.toStringz);
+            wrenAbortFiber(vm, 0);
         }
     }
 
     static string wren_expect_slot_string(WrenVM* vm, int slot) {
-        enforce(wrenGetSlotType(vm, slot) == WREN_TYPE_STRING,
+        wren_enforce(vm, wrenGetSlotType(vm, slot) == WREN_TYPE_STRING,
             format("expected a string in slot %d", slot));
         return wrenGetSlotString(vm, slot).to!string;
     }
@@ -71,13 +73,13 @@ static class WrenUtils {
     }
 
     static double wren_expect_slot_double(WrenVM* vm, int slot) {
-        enforce(wrenGetSlotType(vm, slot) == WREN_TYPE_NUM,
+        wren_enforce(vm, wrenGetSlotType(vm, slot) == WREN_TYPE_NUM,
             format("expected a number in slot %d", slot));
         return wrenGetSlotDouble(vm, slot);
     }
 
     static bool wren_expect_slot_bool(WrenVM* vm, int slot) {
-        enforce(wrenGetSlotType(vm, slot) == WREN_TYPE_BOOL,
+        wren_enforce(vm, wrenGetSlotType(vm, slot) == WREN_TYPE_BOOL,
             format("expected a bool in slot %d", slot));
         return wrenGetSlotBool(vm, slot);
     }

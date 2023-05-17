@@ -1,0 +1,21 @@
+import "wox" for W, R
+
+W.log_inf("this script tests bad behavior and makes sure good errors are shown")
+
+// wrong type call
+var u1 = W.cliopt_int("name1", "should_be_int")
+W.log_inf("u1: %(u1)")
+
+var dummy_recipe = W.virtual_recipe("dummy", [],
+    [
+        R.log("dummy step 1"),
+    ]
+)
+
+var BUILD_RECIPES = [dummy_recipe]
+
+class Build {
+    static recipes { BUILD_RECIPES }
+    static default_recipe { "dummy" }
+}
+
