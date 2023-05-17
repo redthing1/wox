@@ -412,6 +412,15 @@ class WoxBuilder {
                             worker_ix, node.recipe.name);
                     }
                     return true;
+                } else {
+                    synchronized {
+                        log.trace("  [%s] not all outputs are newer than all inputs, build required",
+                            worker_ix);
+                    }
+                }
+            } else {
+                synchronized {
+                    log.dbg("  [%s] not all outputs exist, build required", worker_ix);
                 }
             }
         }
