@@ -273,6 +273,13 @@ class WoxBuilder {
 
         auto toposorted_queue = raw_toposorted_nodes.reverse;
 
+        log.dbg("toposorted queue:");
+        foreach (node; toposorted_queue) {
+            log.dbg(" [%s] %s > '%s'",
+                node.in_degree, node.footprint, node.recipe.name
+            );
+        }
+
         // now, we have a list of nodes
         // they are ordered with the top-level targets first, so we can work backwards
 
@@ -281,7 +288,7 @@ class WoxBuilder {
         // task_pool.isDaemon = true;
         TaskPool make_task_pool() {
             auto task_pool = new TaskPool(options.n_jobs);
-            task_pool.isDaemon = true;
+            // task_pool.isDaemon = true;
             return task_pool;
         }
 
@@ -330,7 +337,7 @@ class WoxBuilder {
             }
         }
 
-        // task_pool.finish(true);
+        task_pool.finish(true);
 
         return true;
     }
@@ -408,19 +415,20 @@ class WoxBuilder {
                 auto oldest_file_output_modtime = file_output_modtimes.minElement;
                 if (newest_file_input_modtime < oldest_file_output_modtime) {
                     synchronized {
-                        log.trace("  [%s] skipping %s because all outputs are newer than all inputs",
+                        log.dbg("  [%s] skipping '%s' because all outputs are newer than all inputs",
                             worker_ix, node.recipe.name);
                     }
                     return true;
                 } else {
                     synchronized {
-                        log.trace("  [%s] not all outputs are newer than all inputs, build required",
-                            worker_ix);
+                        log.dbg("  [%s] not all outputs of '%s' are newer than all inputs, build required",
+                            worker_ix, node.recipe.name);
                     }
                 }
             } else {
                 synchronized {
-                    log.dbg("  [%s] not all outputs exist, build required", worker_ix);
+                    log.dbg("  [%s] not all outputs of '%s' exist, build required",
+                        worker_ix, node.recipe.name);
                 }
             }
         }
