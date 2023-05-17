@@ -3,12 +3,14 @@ module wox.host.solver;
 import std.stdio;
 import std.string;
 import std.array;
+import std.range;
 import std.conv;
 import std.typecons;
 import std.file;
 import std.container.dlist;
 import std.exception : enforce;
 import std.sumtype;
+import std.algorithm: map, filter, group;
 import typetips;
 
 import wox.log;
@@ -120,12 +122,6 @@ class WoxSolver {
             }
         }
         enforce(sorted_nodes.length == visited.length, "graph has a cycle");
-
-        // // print topologically sorted order
-        // log.trace("topologically sorted order:");
-        // foreach (node; sorted_nodes) {
-        //     log.trace(" %s", node);
-        // }
 
         return sorted_nodes;
     }

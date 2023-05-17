@@ -313,7 +313,7 @@ class WoxBuilder {
                 // this node has a lower in-degree
                 // meaning we have to wait for the previous nodes to finish
                 synchronized {
-                    log.trace(" current in-degree %s, next in-degree %s, waiting for previous nodes to finish",
+                    log.dbg(" current in-degree %s, next in-degree %s, waiting for previous nodes to finish",
                         current_in_degree, node_in_degree);
                 }
                 if (!use_single_thread) {
@@ -322,7 +322,10 @@ class WoxBuilder {
                     // create new task pool
                     task_pool = make_task_pool();
                 }
-                current_in_degree = node_in_degree;
+                synchronized {
+                    current_in_degree = node_in_degree;
+                    log.dbg(" all previous nodes finished, in-degree now %s", current_in_degree);
+                }
             }
 
             if (use_single_thread) {
@@ -337,128 +340,140 @@ class WoxBuilder {
             }
         }
 
+        log.warn("calling finish on task pool");
         task_pool.finish(true);
 
         return true;
     }
 
     bool execute_node_recipe(TaskPool pool, WoxSolver.Node node, Logger log) {
-        auto recipe = node.recipe;
-        // logger needs to be passed when multithreading
+        try {
+            auto recipe = node.recipe;
+            // logger needs to be passed when multithreading
 
-        auto worker_ix = pool.workerIndex;
-        synchronized {
-            log.trace(" [%s] maybe build %s with recipe '%s' <- %s",
-                worker_ix,
-                node.recipe.outputs, node.recipe.name, node.recipe.inputs
-            );
-        }
-
-        bool cache_dirty = false;
-        // if cache is enabled, look in the recipe cache
-        if (options.enable_cache && recipe.name !is null) {
-            // hash the current recipe
-            auto current_recipe_cache = cast(long) recipe.hashOf();
-            // get an existing recipe cache
-            auto maybe_recipe_cache = db.get_recipe_cache(recipe.name);
-            cache_dirty = maybe_recipe_cache.match!(
-                (RecipeCache cache_item) => cache_item.hash != current_recipe_cache,
-                () => false, // no existing cache item
-
-                
-
-            );
-            if (maybe_recipe_cache.empty) {
-                log.dbg(" [%s] no existing recipe cache for '%s'", worker_ix, recipe.name);
+            auto worker_ix = pool.workerIndex;
+            synchronized {
+                log.trace(" [%s] maybe build %s with recipe '%s' <- %s",
+                    worker_ix,
+                    node.recipe.outputs, node.recipe.name, node.recipe.inputs
+                );
             }
-            // store the current recipe cache
-            db.update_recipe_cache(recipe.name, current_recipe_cache);
-            log.trace("  [%s] recipe cache status for '%s': %s",
-                worker_ix, recipe.name, cache_dirty ? "dirty" : "clean");
-        }
 
-        auto file_inputs = node.recipe.inputs
-            .filter!(x => x.reality == Footprint.Reality.File).array;
-        auto file_outputs = node.recipe.outputs
-            .filter!(x => x.reality == Footprint.Reality.File).array;
+            // // die
+            // enforce(0, "boz");
 
-        // 1. ensure all file inputs exist
-        foreach (input; file_inputs) {
-            if (!std.file.exists(input.name)) {
-                synchronized {
-                    log.err("  [%s] file input '%s' does not exist", worker_ix, input.name);
+            bool cache_dirty = false;
+            // if cache is enabled, look in the recipe cache
+            if (options.enable_cache && recipe.name !is null) {
+                // hash the current recipe
+                auto current_recipe_cache = cast(long) recipe.hashOf();
+                // get an existing recipe cache
+                auto maybe_recipe_cache = db.get_recipe_cache(recipe.name);
+                cache_dirty = maybe_recipe_cache.match!(
+                    (RecipeCache cache_item) => cache_item.hash != current_recipe_cache,
+                    () => false, // no existing cache item
+
+                    
+
+                );
+                if (maybe_recipe_cache.empty) {
+                    log.dbg(" [%s] no existing recipe cache for '%s'", worker_ix, recipe.name);
                 }
-                return false;
+                // store the current recipe cache
+                db.update_recipe_cache(recipe.name, current_recipe_cache);
+                log.trace("  [%s] recipe cache status for '%s': %s",
+                    worker_ix, recipe.name, cache_dirty ? "dirty" : "clean");
             }
-        }
-        // check if all outputs exist
-        bool all_outputs_exist = file_outputs.length > 0 && file_outputs.all!(
-            x => std.file.exists(x.name));
 
-        if (cache_dirty) {
-            log.trace("  [%s] recipe cache is dirty, forcing rebuild", worker_ix);
-        } else {
-            // recipe cache is clean
+            auto file_inputs = node.recipe.inputs
+                .filter!(x => x.reality == Footprint.Reality.File).array;
+            auto file_outputs = node.recipe.outputs
+                .filter!(x => x.reality == Footprint.Reality.File).array;
 
-            if (all_outputs_exist) {
-                // check if modtimes allow us to skip this recipe
-
-                // get modtimes of all file inputs
-                auto file_input_modtimes = file_inputs
-                    .map!(x => std.file.timeLastModified(x.name).toUnixTime);
-                // get modtimes of all file outputs
-                auto file_output_modtimes = file_outputs
-                    .map!(x => std.file.timeLastModified(x.name).toUnixTime);
-
-                // if all file outputs are newer than all file inputs, we don't need to build
-                auto newest_file_input_modtime = file_input_modtimes.maxElement;
-                auto oldest_file_output_modtime = file_output_modtimes.minElement;
-                if (newest_file_input_modtime < oldest_file_output_modtime) {
+            // 1. ensure all file inputs exist
+            foreach (input; file_inputs) {
+                if (!std.file.exists(input.name)) {
                     synchronized {
-                        log.dbg("  [%s] skipping '%s' because all outputs are newer than all inputs",
-                            worker_ix, node.recipe.name);
+                        log.err("  [%s] file input '%s' does not exist", worker_ix, input.name);
                     }
-                    return true;
+                    return false;
+                }
+            }
+            // check if all outputs exist
+            bool all_outputs_exist = file_outputs.length > 0 && file_outputs.all!(
+                x => std.file.exists(x.name));
+
+            if (cache_dirty) {
+                log.trace("  [%s] recipe cache is dirty, forcing rebuild", worker_ix);
+            } else {
+                // recipe cache is clean
+
+                if (all_outputs_exist) {
+                    // check if modtimes allow us to skip this recipe
+
+                    // get modtimes of all file inputs
+                    auto file_input_modtimes = file_inputs
+                        .map!(x => std.file.timeLastModified(x.name).toUnixTime);
+                    // get modtimes of all file outputs
+                    auto file_output_modtimes = file_outputs
+                        .map!(x => std.file.timeLastModified(x.name).toUnixTime);
+
+                    // if all file outputs are newer than all file inputs, we don't need to build
+                    auto newest_file_input_modtime = file_input_modtimes.maxElement;
+                    auto oldest_file_output_modtime = file_output_modtimes.minElement;
+                    if (newest_file_input_modtime < oldest_file_output_modtime) {
+                        synchronized {
+                            log.dbg("  [%s] skipping '%s' because all outputs are newer than all inputs",
+                                worker_ix, node.recipe.name);
+                        }
+                        return true;
+                    } else {
+                        synchronized {
+                            log.dbg("  [%s] not all outputs of '%s' are newer than all inputs, build required",
+                                worker_ix, node.recipe.name);
+                        }
+                    }
                 } else {
                     synchronized {
-                        log.dbg("  [%s] not all outputs of '%s' are newer than all inputs, build required",
+                        log.dbg("  [%s] not all outputs of '%s' exist, build required",
                             worker_ix, node.recipe.name);
                     }
                 }
-            } else {
+            }
+
+            foreach (step; recipe.steps) {
+                // log.trace("  executing step %s", step);
                 synchronized {
-                    log.dbg("  [%s] not all outputs of '%s' exist, build required",
-                        worker_ix, node.recipe.name);
+                    log.trace("  [%s] executing step %s", worker_ix, step);
+                }
+                auto step_result = execute_step(log, step);
+                if (!step_result) {
+                    synchronized {
+                        log.err("  [%s] error executing step %s", worker_ix, step);
+                    }
+                    return false;
                 }
             }
-        }
 
-        foreach (step; recipe.steps) {
-            // log.trace("  executing step %s", step);
+            // all steps finished, check that all outputs exist
+            foreach (output; file_outputs) {
+                if (!std.file.exists(output.name)) {
+                    synchronized {
+                        log.err("  [%s] output '%s' does not exist after executing recipe '%s'",
+                            worker_ix, output.name, recipe.name);
+                    }
+                    return false;
+                }
+            }
+
+            return true;
+        } catch (Exception e) {
             synchronized {
-                log.trace("  [%s] executing step %s", worker_ix, step);
+                log.err("  [%s] exception executing recipe '%s': %s",
+                    pool.workerIndex, node.recipe.name, e);
             }
-            auto step_result = execute_step(log, step);
-            if (!step_result) {
-                synchronized {
-                    log.err("  [%s] error executing step %s", worker_ix, step);
-                }
-                return false;
-            }
+            return false;
         }
-
-        // all steps finished, check that all outputs exist
-        foreach (output; file_outputs) {
-            if (!std.file.exists(output.name)) {
-                synchronized {
-                    log.err("  [%s] output '%s' does not exist after executing recipe '%s'",
-                        worker_ix, output.name, recipe.name);
-                }
-                return false;
-            }
-        }
-
-        return true;
     }
 
     bool execute_step(Logger log, CommandStep step) {
