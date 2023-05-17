@@ -14,6 +14,7 @@ import std.typecons;
 import std.container.dlist;
 import std.parallelism;
 import std.algorithm;
+import std.range : zip;
 import core.atomic;
 import wren;
 import miniorm;
@@ -364,25 +365,24 @@ class WoxBuilder {
 
             bool cache_dirty = false;
             // if cache is enabled, look in the recipe cache
-            if (options.enable_cache && recipe.name !is null) {
-                // hash the current recipe
-                auto current_recipe_cache = cast(long) recipe.hashOf();
-                // get an existing recipe cache
-                auto maybe_recipe_cache = db.get_recipe_cache(recipe.name);
-                cache_dirty = maybe_recipe_cache.match!(
-                    (RecipeCache cache_item) => cache_item.hash != current_recipe_cache,
-                    () => false, // no existing cache item
-
-                    
-
-                );
-                if (maybe_recipe_cache.empty) {
-                    log.dbg(" [%s] no existing recipe cache for '%s'", worker_ix, recipe.name);
+            synchronized {
+                if (options.enable_cache && recipe.name !is null) {
+                    // hash the current recipe
+                    auto current_recipe_cache = cast(long) recipe.hashOf();
+                    // get an existing recipe cache
+                    auto maybe_recipe_cache = db.get_recipe_cache(recipe.name);
+                    cache_dirty = maybe_recipe_cache.match!(
+                        (RecipeCache cache_item) => cache_item.hash != current_recipe_cache,
+                        () => false,
+                    );
+                    if (maybe_recipe_cache.empty) {
+                        log.dbg(" [%s] no existing recipe cache for '%s'", worker_ix, recipe.name);
+                    }
+                    // store the current recipe cache
+                    db.update_recipe_cache(recipe.name, current_recipe_cache);
+                    log.trace("  [%s] recipe cache status for '%s': %s",
+                        worker_ix, recipe.name, cache_dirty ? "dirty" : "clean");
                 }
-                // store the current recipe cache
-                db.update_recipe_cache(recipe.name, current_recipe_cache);
-                log.trace("  [%s] recipe cache status for '%s': %s",
-                    worker_ix, recipe.name, cache_dirty ? "dirty" : "clean");
             }
 
             auto file_inputs = node.recipe.inputs
@@ -411,17 +411,29 @@ class WoxBuilder {
                 if (all_outputs_exist) {
                     // check if modtimes allow us to skip this recipe
 
-                    // get modtimes of all file inputs
                     auto file_input_modtimes = file_inputs
                         .map!(x => std.file.timeLastModified(x.name).toUnixTime);
-                    // get modtimes of all file outputs
                     auto file_output_modtimes = file_outputs
                         .map!(x => std.file.timeLastModified(x.name).toUnixTime);
+
+                    // auto file_input_modtime_pairs = zip(file_inputs, file_input_modtimes);
+                    // auto file_output_modtime_pairs = zip(file_outputs, file_output_modtimes);
+
+                    // // just dump everything
+                    // foreach (pair; file_input_modtime_pairs) {
+                    //     log.dbg("  [%s] input '%s' modtime %s",
+                    //         worker_ix, pair[0].name, pair[1]);
+                    // }
+                    // foreach (pair; file_output_modtime_pairs) {
+                    //     log.dbg("  [%s] output '%s' modtime %s",
+                    //         worker_ix, pair[0].name, pair[1]);
+                    // }
 
                     // if all file outputs are newer than all file inputs, we don't need to build
                     auto newest_file_input_modtime = file_input_modtimes.maxElement;
                     auto oldest_file_output_modtime = file_output_modtimes.minElement;
-                    if (newest_file_input_modtime < oldest_file_output_modtime) {
+
+                    if (newest_file_input_modtime <= oldest_file_output_modtime) {
                         synchronized {
                             log.dbg("  [%s] skipping '%s' because all outputs are newer than all inputs",
                                 worker_ix, node.recipe.name);
