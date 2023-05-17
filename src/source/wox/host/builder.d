@@ -277,7 +277,7 @@ class WoxBuilder {
         log.trace("toposorted queue:");
         foreach (node; toposorted_queue) {
             log.trace(" [%s] %s > '%s'",
-                node.in_degree, node.footprint, node.recipe.name
+                node.toposort_depth, node.footprint, node.recipe.name
             );
         }
 
@@ -307,7 +307,7 @@ class WoxBuilder {
             }
             visited_recipes[node.recipe] = true;
 
-            auto node_in_degree = node.in_degree;
+            auto node_in_degree = node.toposort_depth;
             if (current_in_degree < 0)
                 current_in_degree = node_in_degree;
             if (node_in_degree < current_in_degree) {

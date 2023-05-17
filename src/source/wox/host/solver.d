@@ -11,6 +11,7 @@ import std.container.dlist;
 import std.exception : enforce;
 import std.sumtype;
 import std.algorithm : map, filter, group;
+import std.algorithm : min, max;
 import typetips;
 
 import wox.log;
@@ -31,7 +32,7 @@ class WoxSolver {
         Node parent = null;
         Node[] children;
 
-        int in_degree = 0;
+        int toposort_depth;
 
         this(Footprint footprint) {
             this.footprint = footprint;
@@ -59,12 +60,13 @@ class WoxSolver {
     Node[] toposort_graph(Graph solver_graph) {
         // topologically sort the graph iteratively using Kahn's algorithm
 
-        // 1. compute in-degree of each node
+        // compute in-degree of each node
         int[Node] in_degree;
         bool[Node] visited;
         auto queue = DList!(Node)();
         foreach (node; solver_graph.roots) {
             in_degree[node] = 0;
+            node.toposort_depth = 0;
             queue.insertBack(node);
         }
 
@@ -77,15 +79,10 @@ class WoxSolver {
             }
 
             visited[node] = true;
-            node.in_degree = in_degree[node];
 
             foreach (child; node.children) {
                 // update in-degree of the child
-                if (child !in in_degree) {
-                    in_degree[child] = 0;
-                }
-                in_degree[child] += 1;
-                child.in_degree = in_degree[child];
+                in_degree[child] = in_degree.get(child, 0) + 1;
                 if (child in visited) {
                     continue;
                 }
@@ -93,7 +90,18 @@ class WoxSolver {
             }
         }
 
-        // 2. kahn's algorithm to sort the graph topologically
+        // compute topological depth of each node recursively
+        void compute_depth(Node node, int depth) {
+            node.toposort_depth = max(node.toposort_depth, depth);
+            foreach (child; node.children) {
+                compute_depth(child, depth + 1);
+            }
+        }
+        foreach (node; solver_graph.roots) {
+            compute_depth(node, 0);
+        }
+
+        // kahn's algorithm to sort the graph topologically
 
         Node[] sorted_nodes;
         visited.clear();
