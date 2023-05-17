@@ -165,8 +165,8 @@ class WoxBuilder {
             if (!maybe_recipe.any) {
                 log.err(
                     "failed to load recipe %d."
-                    ~ " please ensure that W.recipe(...) is invoked with the correct argument types.",
-                    i
+                        ~ " please ensure that W.recipe(...) is invoked with the correct argument types.",
+                        i
                 );
                 return false;
             }
@@ -274,13 +274,24 @@ class WoxBuilder {
             // remove any virtual footprints if we already have a file footprint for the same name
             auto file_outputs = recipe.outputs
                 .filter!(x => x.reality == Footprint.Reality.File).array;
-            auto deduplicated_virtual_outputs = recipe.outputs
-                .filter!(x => x.reality == Footprint.Reality.Virtual)
-                .filter!(x => !file_outputs.any!(y => y.name == x.name))
-                .array;
 
-            recipe.outputs = file_outputs ~ deduplicated_virtual_outputs;
-            // log.trace("  recipe '%s' new outputs: %s", recipe.name, recipe.outputs);
+            // Footprint[] filtered_virtual_outputs;
+            // Footprint[] removed_virtual_outputs;
+            // foreach (output; recipe.outputs) {
+            //     if (output.reality == Footprint.Reality.Virtual) {
+            //         // check if we already have a file output with the same name
+            //         if (file_outputs.any!(y => y.name == output.name)) {
+            //             removed_virtual_outputs ~= output;
+            //         } else {
+            //             filtered_virtual_outputs ~= output;
+            //         }
+            //     }
+            // }
+
+            // // repoint any other recipes who pointed at one of the removed virtual outputs
+            // // TODO
+
+            // recipe.outputs = file_outputs ~ filtered_virtual_outputs;
         }
     }
 
@@ -327,7 +338,8 @@ class WoxBuilder {
         }
 
         auto task_pool = make_task_pool();
-        scope(exit) task_pool.finish(true);
+        scope (exit)
+            task_pool.finish(true);
 
         shared bool[Recipe] visited_recipes;
 
