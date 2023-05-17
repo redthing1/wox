@@ -499,15 +499,19 @@ class WoxBuilder {
                             log.info("%s", step.data);
                         }
                     }
-                    auto command_result = executeShell(step.data);
-                    if (command_result.status != 0) {
-                        log.err("error executing shell command: `%s`:\n%s", step.data, command_result
-                                .output);
+                    // auto command_result = executeShell(step.data);
+                    auto shellPid = spawnShell(step.data);
+                    auto command_result = shellPid.wait();
+                    // if (command_result.status != 0) {
+                    if (command_result != 0) {
+                        // log.err("error executing shell command: `%s`:\n%s", step.data, command_result
+                        //         .output);
+                        log.err("error executing shell command: `%s`", step);
                         return false;
                     }
                     return true;
                 } catch (Exception e) {
-                    log.err("exception executing shell command: `%s`: %s", step.data, e);
+                    log.err("exception executing shell command: `%s`: %s", step, e);
                     return false;
                 }
             }
