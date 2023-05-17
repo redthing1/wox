@@ -169,14 +169,7 @@ class WoxBuilder {
         auto default_recipe = maybe_default_recipe.front;
 
         if (options.list_targets) {
-            writefln("targets");
-            foreach (recipe; all_recipes) {
-                // log.trace("recipe:\n%s", recipe);
-                writefln("  %s", recipe.name);
-                writefln("    dep: %s", recipe.inputs);
-                writefln("    out: %s", recipe.outputs);
-            }
-            // stop here
+            pretty_dump_targets(default_recipe, all_recipes);
             return true;
         }
 
@@ -353,20 +346,11 @@ class WoxBuilder {
                 enforce(log.use_colors, "dry run requires color output");
                 auto sb = appender!string;
 
-                // sb ~= format("[dry run] recipe '%s'\n", node.recipe.name);
-                // sb ~= format("  inputs  : %s\n", node.recipe.inputs);
-                // sb ~= format("  outputs : %s\n", node.recipe.outputs);
-                // if (!node.recipe.steps.empty) {
-                //     sb ~= ("  steps:\n");
-                //     foreach (step; node.recipe.steps) {
-                //         sb ~= format("    %s\n", step);
-                //     }
-                // }
                 sb ~= "[dry run]".color(fg.light_black)
                     ~ " recipe '"
                     ~ format("%s", node.recipe.name).color(fg.green)
                     ~ "'\n";
-                auto emph_col = fg.cyan;
+                auto emph_col = fg.blue;
                 auto emph2_col = fg.red;
                 sb ~= "  inputs  : "
                     ~ format("%s", node.recipe.inputs).color(emph_col)
@@ -593,5 +577,33 @@ class WoxBuilder {
             assert(0, "unknown step type");
         }
 
+    }
+
+    void pretty_dump_targets(Recipe default_recipe, Recipe[] all_recipes) {
+        import colorize : cwritefln, color, fg;
+
+        auto sb = appender!string;
+
+        sb ~= "available targets:\n";
+        auto col_name = fg.green;
+        auto col_em = fg.blue;
+        foreach (recipe; all_recipes) {
+            sb ~= "  "
+                ~ format("%s", recipe.name).color(col_name)
+                ~ "\n";
+            sb ~= "    dep: "
+                ~ format("%s", recipe.inputs).color(col_em)
+                ~ "\n";
+            sb ~= "    out: "
+                ~ format("%s", recipe.outputs).color(col_em)
+                ~ "\n";
+        }
+
+        sb ~= "\n";
+        sb ~= "default target: "
+            ~ format("%s", default_recipe.name).color(col_name)
+            ~ "\n";
+
+        cwritefln(sb.data.stripRight);
     }
 }
