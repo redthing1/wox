@@ -18,18 +18,19 @@ section="devel"
 priority="optional"
 url="https://github.com/redthing1/${pkgname}"
 sources=(
-    "${url}/archive/${pkgver}.tar.gz"
+    "${url}/archive/v${pkgver}.tar.gz"
 )
 hashsums=(
     "skip"
 )
-
 makedepends=(
-    "dmd"
-    "dub"
+    "curl"
 )
-
+d_compiler="dmd-2.103.1"
 build() {
+    # hack to install dlang
+    curl -fsS https://dlang.org/install.sh | bash -s install ${d_compiler} -a
+    . ~/dlang/${d_compiler}/activate
     cd "${pkgname}-${pkgver}/src"
     dub build
 }
