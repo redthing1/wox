@@ -35,6 +35,7 @@ class WoxBuilder {
         int n_jobs = 1;
         string graphviz_file = null;
         bool enable_cache = false;
+        bool list_targets = false;
     }
 
     Options options;
@@ -161,9 +162,17 @@ class WoxBuilder {
         }
         auto default_recipe = maybe_default_recipe.front;
 
-        // foreach (recipe; all_recipes) {
-        //     log.trace("recipe:\n%s", recipe);
-        // }
+        if (options.list_targets) {
+            writefln("targets");
+            foreach (recipe; all_recipes) {
+                // log.trace("recipe:\n%s", recipe);
+                writefln("  %s", recipe.name);
+                writefln("    dep: %s", recipe.inputs);
+                writefln("    out: %s", recipe.outputs);
+            }
+            // stop here
+            return true;
+        }
 
         // make a list of recipes we want to build
         // if any targets are specified, we use those

@@ -35,6 +35,7 @@ int main(string[] args) {
 		.add(new Option("j", "jobs", "number of jobs to run in parallel")
 				.defaultValue(totalCPUs.to!string))
 		.add(new Flag("k", "cache", "enable cache database"))
+		.add(new Flag("l", "list_targets", "list targets in build file"))
 		.parse(wox_args);
 
 	auto verbose_count = min(a.occurencesOf("verbose"), 3);
@@ -76,6 +77,7 @@ int main(string[] args) {
 	build_host_options.graphviz_file = a.option("graphviz_file");
 	build_host_options.n_jobs = a.option("jobs").to!int;
 	build_host_options.enable_cache = a.flag("cache");
+	build_host_options.list_targets = a.flag("list_targets");
 
 	// run build in host
 	auto host = new WoxBuilder(log, build_host_options);
