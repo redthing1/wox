@@ -348,17 +348,41 @@ class WoxBuilder {
             }
 
             if (options.dry_run) {
+                import colorize: cwritefln, color, fg;
+                enforce(log.use_colors, "dry run requires color output");
                 auto sb = appender!string;
-                sb ~= format("[dry run] recipe '%s'\n", node.recipe.name);
-                sb ~= format("  inputs  : %s\n", node.recipe.inputs);
-                sb ~= format("  outputs : %s\n", node.recipe.outputs);
+
+                // sb ~= format("[dry run] recipe '%s'\n", node.recipe.name);
+                // sb ~= format("  inputs  : %s\n", node.recipe.inputs);
+                // sb ~= format("  outputs : %s\n", node.recipe.outputs);
+                // if (!node.recipe.steps.empty) {
+                //     sb ~= ("  steps:\n");
+                //     foreach (step; node.recipe.steps) {
+                //         sb ~= format("    %s\n", step);
+                //     }
+                // }
+                sb ~= "[dry run]".color(fg.light_black)
+                    ~ " recipe '"
+                    ~ format("%s", node.recipe.name).color(fg.green)
+                    ~ "'\n";
+                auto emph_col = fg.cyan;
+                auto emph2_col = fg.red;
+                sb ~= "  inputs  : "
+                    ~ format("%s", node.recipe.inputs).color(emph_col)
+                    ~ "\n";
+                sb ~= "  outputs : "
+                    ~ format("%s", node.recipe.outputs).color(emph_col)
+                    ~ "\n";
                 if (!node.recipe.steps.empty) {
-                    sb ~= ("  steps:\n");
+                    sb ~= "  steps:\n";
                     foreach (step; node.recipe.steps) {
-                        sb ~= format("    %s\n", step);
+                        sb ~= "    "
+                            ~ format("%s", step).color(emph2_col)
+                            ~ "\n";
                     }
                 }
-                writefln(sb.data.stripRight);
+
+                cwritefln(sb.data.stripRight);
                 continue;
             }
 
