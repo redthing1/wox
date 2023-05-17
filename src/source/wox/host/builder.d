@@ -96,11 +96,11 @@ class WoxBuilder {
     }
 
     bool build(string buildscript, string[] requested_targets, string cwd, string[] args, string[string] env) {
-        log.trace("buildscript:\n%s", buildscript);
+        // log.trace("buildscript:\n%s", buildscript);
 
-        // vm info
-        auto wren_ver = wrenGetVersionNumber();
-        log.trace("wren version: %s", wren_ver);
+        // // vm info
+        // auto wren_ver = wrenGetVersionNumber();
+        // log.trace("wren version: %s", wren_ver);
 
         // set up vm
         WrenConfiguration config;
@@ -158,9 +158,9 @@ class WoxBuilder {
         }
         auto default_recipe = maybe_default_recipe.front;
 
-        foreach (recipe; all_recipes) {
-            log.trace("recipe:\n%s", recipe);
-        }
+        // foreach (recipe; all_recipes) {
+        //     log.trace("recipe:\n%s", recipe);
+        // }
 
         // make a list of recipes we want to build
         // if any targets are specified, we use those
@@ -197,7 +197,7 @@ class WoxBuilder {
 
         // dump resolved recipes
         foreach (recipe; all_recipes) {
-            log.trace("resolved recipe:\n%s", recipe);
+            log.dbg("resolved recipe:\n%s", recipe);
         }
 
         // build the recipes
@@ -212,22 +212,22 @@ class WoxBuilder {
         void ensure_footprint_reality(Footprint* fp) {
             // if it's of unknown reality, try to resolve it
             if (fp.reality == Footprint.Reality.Unknown) {
-                log.trace("  resolving %s", *fp);
+                log.dbg("  resolving %s", *fp);
                 // unknown reality means we don't know if it's a file or virtual
                 // so we check if it's a file using some heuristics
 
                 if (std.file.exists(fp.name)) { // is it a real file?
                     fp.reality = Footprint.Reality.File;
-                    log.trace("   %s is a file", *fp);
+                    log.dbg("   %s is a file", *fp);
                 } else if (fp.name.startsWith(".")) { // is it a relative path?
                     fp.reality = Footprint.Reality.File;
-                    log.trace("   %s is probably a file", *fp);
+                    log.dbg("   %s is probably a file", *fp);
                 } else if (fp.name.canFind("/") || fp.name.canFind(".")) { // is it a path?
                     fp.reality = Footprint.Reality.File;
-                    log.trace("   %s is probably a file", *fp);
+                    log.dbg("   %s is probably a file", *fp);
                 } else {
                     fp.reality = Footprint.Reality.Virtual;
-                    log.trace("   assuming %s is virtual", *fp);
+                    log.dbg("   assuming %s is virtual", *fp);
                 }
             }
         }
@@ -274,9 +274,9 @@ class WoxBuilder {
 
         auto toposorted_queue = raw_toposorted_nodes.reverse;
 
-        log.dbg("toposorted queue:");
+        log.trace("toposorted queue:");
         foreach (node; toposorted_queue) {
-            log.dbg(" [%s] %s > '%s'",
+            log.trace(" [%s] %s > '%s'",
                 node.in_degree, node.footprint, node.recipe.name
             );
         }

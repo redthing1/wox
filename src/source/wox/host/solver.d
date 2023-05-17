@@ -10,7 +10,7 @@ import std.file;
 import std.container.dlist;
 import std.exception : enforce;
 import std.sumtype;
-import std.algorithm: map, filter, group;
+import std.algorithm : map, filter, group;
 import typetips;
 
 import wox.log;
@@ -132,19 +132,23 @@ class WoxSolver {
 
     alias WayToBuild = SumTypeExt!(SumType!(RealFile, Recipe));
 
-    Optional!(WayToBuild.Sum) find_way_to_build(Footprint footprint) {
+    Optional!(WayToBuild.Sum) find_way_to_build_dependency(Footprint footprint) {
+        // log.trc("  finding way to build footprint %s", footprint);
+
         // find a recipe that says it can build this footprint
-        log.trace(" finding recipe to build footprint %s", footprint);
         foreach (recipe; all_recipes) {
             // log.trace("  checking if recipe '%s' can build footprint %s", recipe.name, footprint);
             if (recipe.can_build_footprint(footprint)) {
-                log.trace("   recipe '%s' can build footprint %s", recipe.name, footprint);
+                // log.trc("   recipe '%s' can build footprint %s", recipe.name, footprint);
+                log.trace("   recipe '%s' can build dep %s", recipe.name, footprint);
                 return WayToBuild.maybe_wrap(some(recipe));
             }
         }
         // no recipe could build the footprint
         // see if it's a real file that exists
         if (footprint.reality == Footprint.Reality.File && std.file.exists(footprint.name)) {
+            // log.trc("   real file %s", footprint);
+            log.trace("   file dep %s", footprint);
             return WayToBuild.maybe_wrap(some(RealFile(footprint)));
         }
         return no!(WayToBuild.Sum);
@@ -184,7 +188,7 @@ class WoxSolver {
         Node[Footprint] nodes_for_footprints;
 
         foreach (recipe; goal_recipes) {
-            log.trace(" adding target recipe to solver graph: %s", recipe);
+            log.trace(" adding target recipe '%s'", recipe.name);
             recipe_queue.insertBack(RecipeWalk(recipe, Nullable!Recipe.init, []));
         }
 
@@ -195,8 +199,7 @@ class WoxSolver {
             visited_walks[walk] = true;
 
             // process this walk
-            // log.trace("processing recipe '%s'", walk.recipe.name);
-            log.trace("processing recipe '%s' (parent: '%s')",
+            log.trace(" processing recipe '%s' (parent: '%s')",
                 walk.recipe.name,
                 walk.parent_recipe.isNull ? "<null>" : walk.parent_recipe.get.name
             );
@@ -209,12 +212,12 @@ class WoxSolver {
                 if (output in nodes_for_footprints) {
                     // use existing node
                     output_node = nodes_for_footprints[output];
-                    log.trace("  using node for output %s", output);
+                    log.dbg("  using node for output %s", output);
                 } else {
                     // create a new node for this output
                     output_node = new Node(output);
                     output_node.recipe = walk.recipe;
-                    log.trace("  created node for output %s", output);
+                    log.dbg("  created node for output %s", output);
                     nodes_for_footprints[output] = output_node;
                 }
 
@@ -224,12 +227,12 @@ class WoxSolver {
                     // so add this node to the parent node's children
                     foreach (parent_node; walk.parent_nodes) {
                         parent_node.children ~= output_node;
-                        log.trace("   added edge %s -> %s", parent_node, output_node);
+                        log.dbg("   added edge %s -> %s", parent_node, output_node);
                     }
                 } else {
                     // if the parent is null, this is a root node
                     graph.roots ~= output_node;
-                    log.trace("   added root %s", output_node);
+                    log.dbg("   added root %s", output_node);
                 }
 
                 curr_nodes ~= output_node;
@@ -238,7 +241,7 @@ class WoxSolver {
             // add dependencies to the queue (from our inputs)
             foreach (dep; get_dependencies(walk.recipe)) {
                 // find a way to build this dependency
-                auto maybe_way_to_build = find_way_to_build(dep);
+                auto maybe_way_to_build = find_way_to_build_dependency(dep);
                 if (!maybe_way_to_build.any) {
                     enforce(false, format("can't find a way to build footprint %s", dep));
                     assert(0);
@@ -247,7 +250,7 @@ class WoxSolver {
 
                 // if the way to build is a file, it is terminal
                 if (WayToBuild.holds!RealFile(way_to_build)) {
-                    log.trace("  using real file %s", dep);
+                    log.dbg("  using real file %s", dep);
                     continue;
                 }
 
