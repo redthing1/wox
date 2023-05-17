@@ -58,8 +58,9 @@ class WoxSolver {
 
     Node[] toposort_graph(Graph solver_graph) {
         // topologically sort the graph iteratively using Kahn's algorithm
-        int[Node] in_degree;
 
+        // 1. compute in-degree of each node
+        int[Node] in_degree;
         bool[Node] visited;
         auto queue = DList!(Node)();
         foreach (node; solver_graph.roots) {
@@ -92,9 +93,12 @@ class WoxSolver {
             }
         }
 
+        // 2. kahn's algorithm to sort the graph topologically
+
         Node[] sorted_nodes;
         visited.clear();
         queue.clear();
+
         // queue the roots (they have in-degree 0)
         foreach (node; solver_graph.roots) {
             queue.insertBack(node);
@@ -107,21 +111,21 @@ class WoxSolver {
             if (node in visited) {
                 continue;
             }
-
             visited[node] = true;
+
             sorted_nodes ~= node;
 
+            // decrement in-degree of all children
             foreach (child; node.children) {
-                // update in-degree of the child
                 in_degree[child] -= 1;
 
-                // if in-degree becomes 0, add it to queue
+                // if the child's in-degree is now 0, queue it
                 if (in_degree[child] == 0) {
                     queue.insertBack(child);
                 }
             }
         }
-        enforce(sorted_nodes.length == visited.length, "graph has a cycle");
+        enforce(sorted_nodes.length == in_degree.length, "graph has a cycle");
 
         return sorted_nodes;
     }
