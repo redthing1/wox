@@ -117,7 +117,12 @@ struct ModelsFromWrenConverter {
         Recipe ret;
 
         // get name
-        ret.name = wren_ext.call_prop_nullable_string(recipe_h, "name");
+        try {
+            ret.name = wren_ext.call_prop_string(recipe_h, "name");
+        } catch (Exception e) {
+            log.err("failed to get name of recipe");
+            return no!Recipe;
+        }
 
         log.dbg("loading recipe '%s'", ret.name);
 

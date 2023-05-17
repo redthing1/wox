@@ -159,8 +159,6 @@ class WoxBuilder {
 
         auto models_converter = ModelsFromWrenConverter(log, vm);
 
-        // auto all_recipes = all_recipes_h
-        //     .map!(x => models_converter.convert_recipe_from_wren(x)).array;
         Recipe[] all_recipes;
         foreach (i, recipe_h; all_recipes_h) {
             auto maybe_recipe = models_converter.convert_recipe_from_wren(recipe_h);
