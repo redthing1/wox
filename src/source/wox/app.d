@@ -14,7 +14,7 @@ import commandr;
 import wox.host.builder;
 import wox.log;
 
-enum APP_VERSION = "v0.2.0";
+enum APP_VERSION = "v0.3.0";
 enum DEFAULT_BUILDFILE_NAME = "build.wox";
 
 int main(string[] args) {
