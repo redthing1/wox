@@ -80,3 +80,9 @@ to build as a dry run:
 ```sh
 wox -n
 ```
+
+## faq
+
+### can't find a way to build footprint `somefile.ext:V`
+
+wox expects you to refer to local paths with `./somefile.ext` to be explicit about the fact that they are paths and not virtual recipe names. the `:V` indicates that wox is treating that name as a virtual target, and it should instead infer `:F` for a local file if it begins with `./`.
