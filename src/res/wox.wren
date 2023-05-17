@@ -70,10 +70,17 @@ class W {
 
     static zip(seq1, seq2) {
         var ret = []
-        for (i in 0...seq1.count.min(seq2.count)) {
+        for (i in 0...(seq1.count.min(seq2.count))) {
             ret.add([seq1[i], seq2[i]])
         }
         return ret
+    }
+
+    static lines(str) {
+        if (str.count == 0) {
+            return []
+        }
+        return str.split("\n")
     }
 
     static fail() {
