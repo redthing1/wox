@@ -70,3 +70,13 @@ generally, wox can be called similarly to make:
 ```sh
 wox [options] [targets...]
 ```
+
+additionally, to list targets:
+```sh
+wox -l
+```
+
+to build as a dry run:
+```sh
+wox -n
+```

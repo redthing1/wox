@@ -27,6 +27,7 @@ int main(string[] args) {
 		.author("redthing1")
 		.add(new Argument("targets", "targets to build").repeating.optional)
 		.add(new Flag("v", "verbose", "turns on more verbose output").repeating)
+		.add(new Flag("q", "quiet", "reduces output verbosity").repeating)
 		.add(new Option("f", "file", "build file to use")
 				.defaultValue(DEFAULT_BUILDFILE_NAME))
 		.add(new Option("C", "workdir", "change to this directory before doing anything")
@@ -39,8 +40,9 @@ int main(string[] args) {
 		.add(new Flag("n", "dry_run", "don't actually run any commands"))
 		.parse(wox_args);
 
-	auto verbose_count = min(a.occurencesOf("verbose"), 3);
-	auto logger_verbosity = (Verbosity.warn.to!int + verbose_count).to!Verbosity;
+	auto verbose_count = min(a.occurencesOf("verbose"), 2);
+	auto quiet_count = min(a.occurencesOf("quiet"), 2);
+	auto logger_verbosity = (Verbosity.info.to!int + verbose_count - quiet_count).to!Verbosity;
 
 	auto log = Logger(logger_verbosity);
 	log.use_colors = true;
