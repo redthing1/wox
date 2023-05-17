@@ -341,7 +341,7 @@ class WoxBuilder {
             }
         }
 
-        log.warn("calling finish on task pool");
+        // log.warn("calling finish on task pool");
         task_pool.finish(true);
 
         return true;
