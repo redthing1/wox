@@ -348,7 +348,8 @@ class WoxBuilder {
             }
 
             if (options.dry_run) {
-                import colorize: cwritefln, color, fg;
+                import colorize : cwritefln, color, fg;
+
                 enforce(log.use_colors, "dry run requires color output");
                 auto sb = appender!string;
 
@@ -552,6 +553,8 @@ class WoxBuilder {
     }
 
     bool execute_step(Logger log, StepInfo step) {
+        import colorize : color, fg;
+
         switch (step.type) {
         case StepInfo.Type.Command: {
                 import std.process;
@@ -560,7 +563,7 @@ class WoxBuilder {
                     if (!step.is_quiet) {
                         log.source = "cmd";
                         synchronized {
-                            log.info("%s", step.data);
+                            log.info("%s", step.data.color(fg.green));
                         }
                     }
                     // auto command_result = executeShell(step.data);
