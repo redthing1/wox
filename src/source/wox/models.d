@@ -26,6 +26,10 @@ struct Footprint {
 struct CommandStep {
     string cmd;
     bool is_quiet = false;
+
+    string toString() const {
+        return format("cmd(%s)", cmd);
+    }
 }
 
 struct Recipe {
