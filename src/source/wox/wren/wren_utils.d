@@ -3,11 +3,15 @@ module wox.wren.wren_utils;
 import std.string;
 import std.array;
 import std.conv;
+import std.exception : enforce;
 
 import wren;
 
 static class WrenUtils {
     static string[] wren_read_string_list(WrenVM* vm, int list_slot, int temp_slot) {
+        // ensure the item in the slot is a list
+        enforce(wrenGetSlotType(vm, list_slot) == WREN_TYPE_LIST,
+            format("expected a list in slot %d", list_slot));
         auto str_list_len = wrenGetListCount(vm, list_slot);
         string[] str_list_items;
         for (auto i = 0; i < str_list_len; i++) {
@@ -32,6 +36,9 @@ static class WrenUtils {
     }
 
     static WrenHandle*[] wren_read_handle_list(WrenVM* vm, int list_slot, int temp_slot) {
+        // ensure the item in the slot is a list
+        enforce(wrenGetSlotType(vm, list_slot) == WREN_TYPE_LIST,
+            format("expected a list in slot %d", list_slot));
         auto handle_list_len = wrenGetListCount(vm, list_slot);
         WrenHandle*[] list_item_handles;
         for (auto i = 0; i < handle_list_len; i++) {
