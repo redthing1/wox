@@ -23,7 +23,7 @@ cflags.add("-O2")
 // srcs
 var srcs = W.glob("./%(SOURCE_DIR)/*.c")
 // objs
-var objs = W.ext_replace(srcs, ".c", ".o")
+var objs = W.exts_replace(srcs, ".c", ".o")
 
 // includes
 for (dir in INCLUDE_DIRS) {

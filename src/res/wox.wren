@@ -18,6 +18,42 @@ class W {
     foreign static path_extname(path)                       // extname of path
     foreign static file_exists(path)                        // does file exist?
 
+    static replace_many(list, from_str, to_str) {
+        return list.map{|x| x.replace(from_str, to_str)}.toList
+    }
+    static exts_replace(paths, from_str, to_str) {
+        return replace_many(paths, from_str, to_str)
+    }
+    static last_index_of(path) {
+        var last_dot_ix = -1
+        for (i in path.count-1..0) {
+            if (path[i] == ".") {
+                last_dot_ix = i
+                break
+            }
+        }
+        return last_dot_ix
+    }
+    static ext_split(path) {
+        var dot_ix = last_index_of(path)
+        var path_noext = path[0...dot_ix]
+        var path_ext = path[dot_ix..-1]
+        return [path_noext, path_ext]
+    }
+    static ext_remove(path) {
+        var dot_ix = last_index_of(path)
+        return path[0...dot_ix]
+    }
+    static exts_remove(paths) {
+        return paths.map{|x| ext_remove(x)}.toList
+    }
+    static ext_add(path, ext) {
+        return path + ext
+    }
+    static exts_add(paths, ext) {
+        return paths.map{|x| ext_add(x, ext)}.toList
+    }
+
     // logging
     foreign static log_err(msg)                             // log err msg
     foreign static log_wrn(msg)                             // log warn msg

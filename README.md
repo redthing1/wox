@@ -24,7 +24,7 @@ var cc = W.cliopt("-cc", "gcc")
 var cflags = ["-Wall", "-std=c11"]
 
 var srcs = W.glob("./*.c")
-var objs = W.ext_replace(srcs, ".c", ".o")
+var objs = W.exts_replace(srcs, ".c", ".o")
 var src_obj_pairs = W.zip(srcs, objs)
 
 var obj_recipes = src_obj_pairs.map { |x|

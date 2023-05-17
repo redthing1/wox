@@ -56,4 +56,29 @@ static class WrenUtils {
             wrenReleaseHandle(vm, handle);
         }
     }
+
+    static string wren_expect_slot_string(WrenVM* vm, int slot) {
+        enforce(wrenGetSlotType(vm, slot) == WREN_TYPE_STRING,
+            format("expected a string in slot %d", slot));
+        return wrenGetSlotString(vm, slot).to!string;
+    }
+
+    static string wren_expect_slot_nullable_string(WrenVM* vm, int slot) {
+        if (wrenGetSlotType(vm, slot) == WREN_TYPE_NULL) {
+            return null;
+        }
+        return wren_expect_slot_string(vm, slot);
+    }
+
+    static double wren_expect_slot_double(WrenVM* vm, int slot) {
+        enforce(wrenGetSlotType(vm, slot) == WREN_TYPE_NUM,
+            format("expected a number in slot %d", slot));
+        return wrenGetSlotDouble(vm, slot);
+    }
+
+    static bool wren_expect_slot_bool(WrenVM* vm, int slot) {
+        enforce(wrenGetSlotType(vm, slot) == WREN_TYPE_BOOL,
+            format("expected a bool in slot %d", slot));
+        return wrenGetSlotBool(vm, slot);
+    }
 }

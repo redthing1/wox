@@ -66,22 +66,22 @@ struct BindForeignW {
 
         // cliopt(name, default) -> string
         static void cliopt(WrenVM* vm) {
-            auto name = wrenGetSlotString(vm, 1);
-            auto def = wrenGetSlotString(vm, 2);
+            auto name = WrenUtils.wren_expect_slot_string(vm, 1);
+            auto def = WrenUtils.wren_expect_slot_nullable_string(vm, 2);
 
             auto string_opt = wox_context.parsed_args.opt(name.to!string);
-            if (string_opt is null) {
-                wrenSetSlotString(vm, 0, def);
-                return;
-            }
-
-            wrenSetSlotString(vm, 0, string_opt.toStringz);
+            if (string_opt !is null)
+                wrenSetSlotString(vm, 0, string_opt.toStringz);
+            else if (def !is null)
+                wrenSetSlotString(vm, 0, def.toStringz);
+            else
+                wrenSetSlotNull(vm, 0);
         }
 
         // cliopt_int(name, default) -> int
         static void cliopt_int(WrenVM* vm) {
-            auto name = wrenGetSlotString(vm, 1);
-            auto def = wrenGetSlotDouble(vm, 2);
+            auto name = WrenUtils.wren_expect_slot_string(vm, 1);
+            auto def = WrenUtils.wren_expect_slot_double(vm, 2);
 
             auto int_opt = wox_context.parsed_args.opt(name.to!string);
             if (int_opt is null) {
@@ -94,7 +94,7 @@ struct BindForeignW {
 
         // cliopt_bool(name, default) -> bool
         static void cliopt_bool(WrenVM* vm) {
-            auto name = wrenGetSlotString(vm, 1);
+            auto name = WrenUtils.wren_expect_slot_string(vm, 1);
             auto def = wrenGetSlotBool(vm, 2);
 
             auto bool_opt = wox_context.parsed_args.flag(name.to!string);
@@ -103,18 +103,20 @@ struct BindForeignW {
 
         // env(name, default) -> string
         static void env(WrenVM* vm) {
-            auto name = wrenGetSlotString(vm, 1).to!string;
-            auto def = wrenGetSlotString(vm, 2);
+            auto name = WrenUtils.wren_expect_slot_string(vm, 1).to!string;
+            auto def = WrenUtils.wren_expect_slot_nullable_string(vm, 2);
 
             if (name in wox_context.env)
                 wrenSetSlotString(vm, 0, wox_context.env[name].toStringz);
+            else if (def !is null)
+                wrenSetSlotString(vm, 0, def.toStringz);
             else
-                wrenSetSlotString(vm, 0, def);
+                wrenSetSlotNull(vm, 0);
         }
 
         // glob(pattern) -> list[string]
         static void glob(WrenVM* vm) {
-            auto pattern = wrenGetSlotString(vm, 1);
+            auto pattern = WrenUtils.wren_expect_slot_string(vm, 1);
 
             auto pattern_str = pattern.to!string;
             // convert glob expression to regex
@@ -139,7 +141,7 @@ struct BindForeignW {
 
         // path_split(path) -> list[string]
         static void path_split(WrenVM* vm) {
-            auto path = wrenGetSlotString(vm, 1).to!string;
+            auto path = WrenUtils.wren_expect_slot_string(vm, 1).to!string;
 
             auto path_segments = path.split(std.path.dirSeparator);
 
@@ -148,7 +150,7 @@ struct BindForeignW {
 
         // path_dirname(path) -> string
         static void path_dirname(WrenVM* vm) {
-            auto path = wrenGetSlotString(vm, 1).to!string;
+            auto path = WrenUtils.wren_expect_slot_string(vm, 1).to!string;
 
             auto result = std.path.dirName(path);
 
@@ -157,7 +159,7 @@ struct BindForeignW {
 
         // path_basename(path) -> string
         static void path_basename(WrenVM* vm) {
-            auto path = wrenGetSlotString(vm, 1).to!string;
+            auto path = WrenUtils.wren_expect_slot_string(vm, 1).to!string;
 
             auto result = std.path.baseName(path);
 
@@ -166,7 +168,7 @@ struct BindForeignW {
 
         // path_extname(path) -> string
         static void path_extname(WrenVM* vm) {
-            auto path = wrenGetSlotString(vm, 1).to!string;
+            auto path = WrenUtils.wren_expect_slot_string(vm, 1).to!string;
 
             auto result = std.path.extension(path);
 
@@ -175,7 +177,7 @@ struct BindForeignW {
 
         // file_exists(path) -> bool
         static void file_exists(WrenVM* vm) {
-            auto path = wrenGetSlotString(vm, 1).to!string;
+            auto path = WrenUtils.wren_expect_slot_string(vm, 1).to!string;
 
             auto result = std.file.exists(path);
             wrenSetSlotBool(vm, 0, result);
@@ -188,37 +190,37 @@ struct BindForeignW {
 
         // log_err(msg)
         static void log_err(WrenVM* vm) {
-            auto msg = wrenGetSlotString(vm, 1).to!string;
+            auto msg = WrenUtils.wren_expect_slot_string(vm, 1).to!string;
             wox_context.buildscript_log.err(msg);
         }
 
         // log_wrn(msg)
         static void log_wrn(WrenVM* vm) {
-            auto msg = wrenGetSlotString(vm, 1).to!string;
+            auto msg = WrenUtils.wren_expect_slot_string(vm, 1).to!string;
             wox_context.buildscript_log.wrn(msg);
         }
 
         // log_inf(msg)
         static void log_inf(WrenVM* vm) {
-            auto msg = wrenGetSlotString(vm, 1).to!string;
+            auto msg = WrenUtils.wren_expect_slot_string(vm, 1).to!string;
             wox_context.buildscript_log.inf(msg);
         }
 
         // log_trc(msg)
         static void log_trc(WrenVM* vm) {
-            auto msg = wrenGetSlotString(vm, 1).to!string;
+            auto msg = WrenUtils.wren_expect_slot_string(vm, 1).to!string;
             wox_context.buildscript_log.trc(msg);
         }
 
         // log_dbg(msg)
         static void log_dbg(WrenVM* vm) {
-            auto msg = wrenGetSlotString(vm, 1).to!string;
+            auto msg = WrenUtils.wren_expect_slot_string(vm, 1).to!string;
             wox_context.buildscript_log.dbg(msg);
         }
 
         // shell(cmd) -> string
         static void shell(WrenVM* vm) {
-            auto cmd = wrenGetSlotString(vm, 1).to!string;
+            auto cmd = WrenUtils.wren_expect_slot_string(vm, 1).to!string;
 
             auto result = ForeignCommon.shell_execute(cmd);
             if (result !is null) {
@@ -231,7 +233,7 @@ struct BindForeignW {
         // join(list, sep) -> string
         static void join(WrenVM* vm) {
             auto list = WrenUtils.wren_read_string_list(vm, 1, 0);
-            auto sep = wrenGetSlotString(vm, 2).to!string;
+            auto sep = WrenUtils.wren_expect_slot_string(vm, 2).to!string;
 
             auto result = list.join(sep);
 
