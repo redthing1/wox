@@ -43,6 +43,10 @@ class W {
         return ret
     }
 
+    static fail() {
+        Fiber.abort("aborted")
+    }
+
     // recipes
     // foreign static recipe(inputs, outputs, steps)           // recipe
     // foreign static recipe(name, inputs, outputs, steps)     // named recipe
