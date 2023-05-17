@@ -41,9 +41,15 @@ static struct ForeignCommon {
     static string shell_execute(string command) {
         import std.process;
 
+        wox_context.wox_log.trace("executing shell command: `%s`", command);
+
         try {
             auto command_result = executeShell(command);
-            return command_result.output.idup;
+            auto command_output = command_result.output.strip();
+            if (command_output is null) command_output = "";
+            else command_output = command_output.idup;
+            wox_context.wox_log.dbg("  command output: `%s`", command_output);
+            return command_output;
         } catch (Exception e) {
             wox_context.wox_log.err("error executing shell command: `%s`: %s", command, e);
             return null;

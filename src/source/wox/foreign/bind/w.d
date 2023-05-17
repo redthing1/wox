@@ -223,11 +223,8 @@ struct BindForeignW {
             auto cmd = WrenUtils.wren_expect_slot_string(vm, 1).to!string;
 
             auto result = ForeignCommon.shell_execute(cmd);
-            if (result !is null) {
-                wrenSetSlotString(vm, 0, result.toStringz);
-            } else {
-                wrenSetSlotNull(vm, 0);
-            }
+            enforce(result !is null, "shell execute returned null");
+            wrenSetSlotString(vm, 0, result.toStringz);
         }
 
         // join(list, sep) -> string
