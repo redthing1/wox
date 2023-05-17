@@ -129,7 +129,8 @@ struct ModelsFromWrenConverter {
         auto inputs_list_h = wren_ext.call_prop_handle_list(recipe_h, "inputs");
         foreach (i, input_h; inputs_list_h) {
             try {
-                ret.inputs ~= convert_footprint_from_wren(input_h);
+                auto maybe_footprint = convert_footprint_from_wren(input_h);
+                ret.inputs ~= maybe_footprint.get;
             } catch (Exception e) {
                 log.err("failed to load input %d of recipe '%s'", i, ret.name);
                 return no!Recipe;
@@ -140,7 +141,8 @@ struct ModelsFromWrenConverter {
         auto outputs_list_h = wren_ext.call_prop_handle_list(recipe_h, "outputs");
         foreach (i, output_h; outputs_list_h) {
             try {
-                ret.outputs ~= convert_footprint_from_wren(output_h);
+                auto maybe_footprint = convert_footprint_from_wren(output_h);
+                ret.outputs ~= maybe_footprint.get;
             } catch (Exception e) {
                 log.err("failed to load output %d of recipe '%s'", i, ret.name);
                 return no!Recipe;
@@ -151,32 +153,57 @@ struct ModelsFromWrenConverter {
         auto steps_list_h = wren_ext.call_prop_handle_list(recipe_h, "steps");
         foreach (i, step_h; steps_list_h) {
             try {
-                ret.steps ~= convert_step_from_wren(step_h);
+                auto maybe_step = convert_step_from_wren(step_h);
+                ret.steps ~= maybe_step.get;
             } catch (Exception e) {
                 log.err("failed to load step %d of recipe '%s'", i, ret.name);
                 return no!Recipe;
             }
         }
 
+        // validate
+
+        // name must not be null or empty
+        if (ret.name is null || ret.name.length == 0) {
+            log.err("recipe has no name: %s", ret);
+            return no!Recipe;
+        }
+
         return some(ret);
     }
 
-    Footprint convert_footprint_from_wren(WrenHandle* footprint_h) {
+    Optional!Footprint convert_footprint_from_wren(WrenHandle* footprint_h) {
         Footprint ret;
 
         ret.name = wren_ext.call_prop_nullable_string(footprint_h, "name");
         ret.reality = cast(Footprint.Reality) cast(int) wren_ext.call_prop_num(footprint_h, "reality");
 
-        return ret;
+        // validate
+
+        // name must not be null or empty
+        if (ret.name is null || ret.name.length == 0) {
+            log.err("footprint has no name: %s", ret);
+            return no!Footprint;
+        }
+
+        return some(ret);
     }
 
-    StepInfo convert_step_from_wren(WrenHandle* step_h) {
+    Optional!StepInfo convert_step_from_wren(WrenHandle* step_h) {
         StepInfo ret;
 
         ret.type = cast(StepInfo.Type) cast(int) wren_ext.call_prop_num(step_h, "type");
         ret.data = wren_ext.call_prop_nullable_string(step_h, "data");
         ret.is_quiet = wren_ext.call_prop_bool(step_h, "quiet");
 
-        return ret;
+        // validate
+
+        // data must not be null or empty
+        if (ret.data is null || ret.data.length == 0) {
+            log.err("step has no data: %s", ret);
+            return no!StepInfo;
+        }
+
+        return some(ret);
     }
 }
