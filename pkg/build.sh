@@ -1,0 +1,1 @@
+pacur build $@

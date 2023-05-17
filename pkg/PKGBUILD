@@ -1,0 +1,40 @@
+targets=(
+    "archlinux"
+    "fedora"
+    "debian"
+    "ubuntu"
+)
+pkgname="wox"
+pkgver="0.2.0"
+pkgrel="1"
+pkgdesc="Highly flexible recipe build system"
+pkgdesclong=(
+    "A highly flexible recipe build system written in D and scripted with Wren, inspired by make and its derivatives"
+)
+maintainer="redthing1 <redthing1@alt.icu>"
+arch="all"
+license=("GPLv3")
+section="devel"
+priority="optional"
+url="https://github.com/redthing1/${pkgname}"
+sources=(
+    "${url}/archive/${pkgver}.tar.gz"
+)
+hashsums=(
+    "skip"
+)
+
+makedepends=(
+    "dmd"
+    "dub"
+)
+
+build() {
+    cd "${pkgname}-${pkgver}/src"
+    dub build
+}
+
+package() {
+    mkdir -p "${pkgdir}/usr/bin"
+    cp "${pkgname}-${pkgver}/src/${pkgname}" "${pkgdir}/usr/bin/${pkgname}"
+}

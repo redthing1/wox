@@ -1,0 +1,21 @@
+FROM debian:buster-slim
+
+# install dependencies
+RUN apt update && apt install -y \
+  bash build-essential reprepro rsync wget zip git mercurial \
+  && rm -rf /var/lib/apt/lists/* && apt autoremove -y && apt clean
+
+RUN wget -q https://go.dev/dl/go1.19.6.linux-amd64.tar.gz \
+    && echo "e3410c676ced327aec928303fef11385702a5562fd19d9a1750d5a2979763c3d go1.19.6.linux-amd64.tar.gz" | sha256sum -c - \
+    && tar -C /usr/local -xf go1.19.6.linux-amd64.tar.gz \
+    && rm -f go1.19.6.linux-amd64.tar.gz
+
+ENV GOPATH /go
+ENV PATH /usr/local/go/bin:$PATH:/go/bin
+ENV GO111MODULE on
+
+RUN GOPROXY=direct go install github.com/pacur/pacur@latest \
+  && ln -s /go/bin/pacur /usr/local/bin/pacur
+
+# set up main to run bash
+CMD ["/bin/bash", "-l"]
