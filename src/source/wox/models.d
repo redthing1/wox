@@ -5,6 +5,7 @@ import std.string;
 import std.array;
 import std.conv;
 import std.exception : enforce;
+import typetips;
 
 import wox.log;
 
@@ -35,8 +36,13 @@ struct StepInfo {
     string data;
     bool is_quiet = false;
 
-    @property bool is_command() const { return type == Type.Command; }
-    @property bool is_log() const { return type == Type.Log; }
+    @property bool is_command() const {
+        return type == Type.Command;
+    }
+
+    @property bool is_log() const {
+        return type == Type.Log;
+    }
 
     string toString() const {
         switch (type) {
@@ -107,7 +113,7 @@ struct ModelsFromWrenConverter {
         wren_ext = WrenExt(vm);
     }
 
-    Recipe convert_recipe_from_wren(WrenHandle* recipe_h) {
+    Optional!Recipe convert_recipe_from_wren(WrenHandle* recipe_h) {
         Recipe ret;
 
         // get name
@@ -117,22 +123,37 @@ struct ModelsFromWrenConverter {
 
         auto inputs_list_h = wren_ext.call_prop_handle_list(recipe_h, "inputs");
         foreach (i, input_h; inputs_list_h) {
-            ret.inputs ~= convert_footprint_from_wren(input_h);
+            try {
+                ret.inputs ~= convert_footprint_from_wren(input_h);
+            } catch (Exception e) {
+                log.err("failed to load input %d of recipe '%s'", i, ret.name);
+                return no!Recipe;
+            }
         }
 
         // get outputs (which are a list of footprints)
         auto outputs_list_h = wren_ext.call_prop_handle_list(recipe_h, "outputs");
         foreach (i, output_h; outputs_list_h) {
-            ret.outputs ~= convert_footprint_from_wren(output_h);
+            try {
+                ret.outputs ~= convert_footprint_from_wren(output_h);
+            } catch (Exception e) {
+                log.err("failed to load output %d of recipe '%s'", i, ret.name);
+                return no!Recipe;
+            }
         }
 
         // get steps (which are a list of steps)
         auto steps_list_h = wren_ext.call_prop_handle_list(recipe_h, "steps");
         foreach (i, step_h; steps_list_h) {
-            ret.steps ~= convert_step_from_wren(step_h);
+            try {
+                ret.steps ~= convert_step_from_wren(step_h);
+            } catch (Exception e) {
+                log.err("failed to load step %d of recipe '%s'", i, ret.name);
+                return no!Recipe;
+            }
         }
 
-        return ret;
+        return some(ret);
     }
 
     Footprint convert_footprint_from_wren(WrenHandle* footprint_h) {

@@ -5,20 +5,21 @@ import std.file;
 import std.path;
 import std.conv;
 import std.string;
-import std.algorithm;
+import std.algorithm : map, filter;
+import std.algorithm : find, canFind;
 import std.array;
 import core.stdc.stdio;
 import core.stdc.string;
 import std.exception : enforce;
-import std.typecons;
+import std.typecons : Nullable;
 import std.container.dlist;
 import std.parallelism;
-import std.algorithm;
 import std.range : zip;
 import core.atomic;
 import wren;
 import miniorm;
 import optional;
+import typetips;
 
 import wox.log;
 import wox.models;
@@ -158,8 +159,21 @@ class WoxBuilder {
 
         auto models_converter = ModelsFromWrenConverter(log, vm);
 
-        auto all_recipes = all_recipes_h
-            .map!(x => models_converter.convert_recipe_from_wren(x)).array;
+        // auto all_recipes = all_recipes_h
+        //     .map!(x => models_converter.convert_recipe_from_wren(x)).array;
+        Recipe[] all_recipes;
+        foreach (i, recipe_h; all_recipes_h) {
+            auto maybe_recipe = models_converter.convert_recipe_from_wren(recipe_h);
+            if (maybe_recipe.any) {
+                log.err(
+                    "failed to load recipe %d."
+                    ~ " please ensure that W.recipe(...) is invoked with the correct argument types.",
+                    i
+                );
+                return false;
+            }
+            all_recipes ~= maybe_recipe.get;
+        }
         // find the default recipe in the list
         auto maybe_default_recipe = all_recipes.filter!(x => x.name == default_recipe_name);
         if (maybe_default_recipe.empty) {
@@ -257,6 +271,8 @@ class WoxBuilder {
                 ensure_footprint_reality(output);
             }
 
+            import std.algorithm : any;
+
             // remove any virtual footprints if we already have a file footprint for the same name
             auto file_outputs = recipe.outputs
                 .filter!(x => x.reality == Footprint.Reality.File).array;
@@ -282,6 +298,8 @@ class WoxBuilder {
         }
 
         auto raw_toposorted_nodes = solver.toposort_graph(solver_graph);
+
+        import std.algorithm : reverse;
 
         auto toposorted_queue = raw_toposorted_nodes.reverse;
 
@@ -426,6 +444,8 @@ class WoxBuilder {
                         worker_ix, recipe.name, cache_dirty ? "dirty" : "clean");
                 }
             }
+
+            import std.algorithm : minElement, maxElement, any, all;
 
             auto file_inputs = node.recipe.inputs
                 .filter!(x => x.reality == Footprint.Reality.File).array;
