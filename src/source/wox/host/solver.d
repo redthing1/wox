@@ -145,7 +145,7 @@ class WoxSolver {
     alias WayToBuild = SumTypeExt!(SumType!(RealFile, Recipe));
 
     Optional!(WayToBuild.Sum) find_way_to_build_dependency(Footprint footprint) {
-        // log.trc("  finding way to build footprint %s", footprint);
+        log.dbg("  finding way to build footprint %s", footprint);
 
         // find a recipe that says it can build this footprint
         foreach (recipe; all_recipes) {
@@ -166,7 +166,7 @@ class WoxSolver {
         return no!(WayToBuild.Sum);
     }
 
-    Graph build_graph() {
+    Optional!Graph build_graph() {
         // create a solver graph
         log.trace("creating solver graph");
         auto graph = new Graph();
@@ -255,8 +255,10 @@ class WoxSolver {
                 // find a way to build this dependency
                 auto maybe_way_to_build = find_way_to_build_dependency(dep);
                 if (!maybe_way_to_build.any) {
-                    enforce(false, format("can't find a way to build footprint %s", dep));
-                    assert(0);
+                    log.err("can't find a way to build footprint %s", dep);
+                    // enforce(0, format("dependency solver failed"));
+                    // assert(0);
+                    return no!Graph;
                 }
                 auto way_to_build = maybe_way_to_build.get;
 
@@ -284,7 +286,7 @@ class WoxSolver {
             }
         }
 
-        return graph;
+        return some(graph);
     }
 
     string dump_as_graphviz(Graph graph) {

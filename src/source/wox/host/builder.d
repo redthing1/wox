@@ -287,7 +287,13 @@ class WoxBuilder {
     bool build_recipes(Recipe[] goal_recipes, Recipe[] all_recipes) {
         // build a graph of the recipes
         auto solver = new WoxSolver(log, goal_recipes, all_recipes);
-        auto solver_graph = solver.build_graph();
+        auto maybe_solver_graph = solver.build_graph();
+
+        if (!maybe_solver_graph.any) {
+            log.err("dependency solving failed");
+            return false;
+        }
+        auto solver_graph = maybe_solver_graph.get;
 
         if (options.graphviz_file !is null) {
             log.trace("dumping solver graph to %s", options.graphviz_file);
