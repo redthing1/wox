@@ -23,12 +23,6 @@ struct BindForeignW {
                 return &W.env;
             case "glob(_)":
                 return &W.glob;
-            case "ext_add(_,_)":
-                return &W.ext_add;
-            case "ext_replace(_,_,_)":
-                return &W.ext_replace;
-            case "ext_remove(_,_)":
-                return &W.ext_remove;
             case "path_join(_)":
                 return &W.path_join;
             case "path_split(_)":
@@ -132,53 +126,6 @@ struct BindForeignW {
             auto matching_files = ForeignCommon.recursive_listdir_matching(".", regex_str);
 
             WrenUtils.wren_write_string_list(vm, 0, matching_files, 1);
-        }
-
-        // ext_add(paths: list, ext) -> list[string]
-        static void ext_add(WrenVM* vm) {
-            auto paths = WrenUtils.wren_read_string_list(vm, 1, 0);
-            auto ext = wrenGetSlotString(vm, 2).to!string;
-
-            foreach (i, path; paths) {
-                // append extension to each path
-                paths[i] = path ~ ext;
-            }
-
-            WrenUtils.wren_write_string_list(vm, 0, paths, 1);
-        }
-
-        // ext_replace(paths: list, ext, new_ext) -> list[string]
-        static void ext_replace(WrenVM* vm) {
-            auto paths = WrenUtils.wren_read_string_list(vm, 1, 0);
-            auto ext = wrenGetSlotString(vm, 2).to!string;
-            auto new_ext = wrenGetSlotString(vm, 3).to!string;
-
-            foreach (i, path; paths) {
-                // replace extension in each path
-                paths[i] = path.replace(ext, new_ext);
-            }
-
-            WrenUtils.wren_write_string_list(vm, 0, paths, 1);
-        }
-
-        // ext_remove(paths: list, ext) -> list[string]
-        static void ext_remove(WrenVM* vm) {
-            auto paths = WrenUtils.wren_read_string_list(vm, 1, 0);
-            auto ext = wrenGetSlotString(vm, 2).to!string;
-
-            foreach (i, path; paths) {
-                // remove extension from each path
-                if (ext == "") {
-                    // if ext is empty, remove the last extension
-                    auto last_dot_ix = path.lastIndexOf(".");
-                    paths[i] = path[0 .. last_dot_ix];
-                } else {
-                    // otherwise, remove the specified extension
-                    paths[i] = path.replace(ext, "");
-                }
-            }
-
-            WrenUtils.wren_write_string_list(vm, 0, paths, 1);
         }
 
         // path_join(paths: list) -> string
