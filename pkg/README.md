@@ -3,6 +3,8 @@
 
 build [pacur](https://github.com/pacur/pacur) container for target system, then, run the distro-specific pacur container to build packages.
 
+in the below example you can replace `debian-bullseye` with your target distro, such as `archlinux`, `ubuntu-focal`, `fedora-37`, etc.
+
 ## example: debian
 
 go to somewhere you can clone pacur:
