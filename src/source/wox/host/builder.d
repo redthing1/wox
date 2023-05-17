@@ -146,7 +146,7 @@ class WoxBuilder {
         auto default_recipe_name = wren_ext.call_prop_string(build_class_h, "default_recipe");
         auto all_recipes_h = wren_ext.call_prop_handle_list(build_class_h, "recipes");
 
-        auto models_converter = ModelsFromWrenConverter(vm);
+        auto models_converter = ModelsFromWrenConverter(log, vm);
 
         auto all_recipes = all_recipes_h
             .map!(x => models_converter.convert_recipe_from_wren(x)).array;

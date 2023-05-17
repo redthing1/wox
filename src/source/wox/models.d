@@ -6,6 +6,8 @@ import std.array;
 import std.conv;
 import std.exception : enforce;
 
+import wox.log;
+
 struct Footprint {
     enum Reality {
         Unknown,
@@ -97,9 +99,11 @@ struct ModelsFromWrenConverter {
     import wox.host.meta;
     import wox.wren;
 
+    Logger log;
     WrenExt wren_ext;
 
-    this(WrenVM* vm) {
+    this(Logger log, WrenVM* vm) {
+        this.log = log;
         wren_ext = WrenExt(vm);
     }
 
@@ -108,6 +112,8 @@ struct ModelsFromWrenConverter {
 
         // get name
         ret.name = wren_ext.call_prop_nullable_string(recipe_h, "name");
+
+        log.dbg("loading recipe '%s'", ret.name);
 
         auto inputs_list_h = wren_ext.call_prop_handle_list(recipe_h, "inputs");
         foreach (i, input_h; inputs_list_h) {
