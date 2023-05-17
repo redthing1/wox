@@ -327,7 +327,8 @@ class WoxBuilder {
         }
 
         auto task_pool = make_task_pool();
-        // Task[] task_pool_tasks;
+        scope(exit) task_pool.finish(true);
+
         shared bool[Recipe] visited_recipes;
 
         log.trace("executing solved recipes with %s jobs", options.n_jobs);
@@ -396,6 +397,10 @@ class WoxBuilder {
             if (use_single_thread) {
                 auto result = execute_node_recipe(task_pool, node, log);
                 if (!result) {
+                    if (!use_single_thread) {
+                        task_pool.stop();
+                    }
+                    log.err("aborting build");
                     return false;
                 }
             } else {
@@ -404,9 +409,6 @@ class WoxBuilder {
                 task_pool.put(execute_task);
             }
         }
-
-        // log.warn("calling finish on task pool");
-        task_pool.finish(true);
 
         return true;
     }
@@ -528,8 +530,8 @@ class WoxBuilder {
                 }
                 auto step_result = execute_step(log, step);
                 if (!step_result) {
+                    // failure
                     synchronized {
-                        // log.err("  [%s] error executing step %s", worker_ix, step);
                         log.err("  [%s] error executing recipe '%s': step %s failed",
                             worker_ix, node.recipe.name, step);
                     }
