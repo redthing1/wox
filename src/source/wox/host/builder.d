@@ -59,21 +59,21 @@ class WoxBuilder {
     ) {
         switch (errorType) with (WrenErrorType) {
         case WREN_ERROR_COMPILE: {
-                log.err("[wren] Error in %s at line %d: %s", module_.to!string, line, msg
+                log.err("[wren] compile error at %s:%d: %s", module_.to!string, line, msg
                         .to!string);
                 break;
             }
         case WREN_ERROR_STACK_TRACE: {
-                log.err("[wren] Error in %s at line %d: %s", module_.to!string, line, msg
+                log.err("[wren] error at %s:%d: %s", module_.to!string, line, msg
                         .to!string);
                 break;
             }
         case WREN_ERROR_RUNTIME: {
-                log.err("[wren] Runtime Error: %s", msg.to!string);
+                log.err("[wren] runtime error: %s", msg.to!string);
                 break;
             }
         default: {
-                log.err("[wren] Unknown Error: %s", msg.to!string);
+                log.err("[wren] unknown error: %s", msg.to!string);
                 break;
             }
         }
