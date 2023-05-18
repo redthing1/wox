@@ -88,18 +88,28 @@ class WoxBuilder {
     }
 
     extern (C) static WrenLoadModuleResult wren_load_module(WrenVM* vm, const(char)* name) {
-        log.trace("loading module %s", name.to!string);
-        auto module_base_path = name.to!string.replace(".", "/");
-        static immutable possible_extensions = ["", ".wren", ".wox"];
+        import std.algorithm: joiner;
+        
+        auto name_str = name.to!string;
+        log.trace("trying to load module %s", name_str);
+        auto possible_path_bases = [
+            name_str,
+            name_str.replace(".", "/"),
+        ];
+        static immutable possible_extensions = [
+            "", ".wren", ".wox", format("/%s", DEFAULT_BUILDFILE_NAME)
+        ];
+        auto possible_paths = possible_path_bases
+            .map!(base => possible_extensions.map!(ext => base ~ ext))
+            .joiner;
         // find a matching file
-        auto module_path = possible_extensions.map!(ext => module_base_path ~ ext)
-            .find!(p => std.file.exists(p));
+        auto module_path = possible_paths.find!(p => std.file.exists(p));
         if (module_path.empty) {
             // log.err("failed to find module %s", name.to!string);
             return WrenLoadModuleResult(null);
         }
+        log.trace("successfully located module %s at %s", name.to!string, module_path.front);
         auto module_source = std.file.readText(module_path.front);
-
         return WrenLoadModuleResult(module_source.toStringz);
     }
 
