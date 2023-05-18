@@ -15,7 +15,7 @@ import wox.host.meta;
 import wox.host.builder;
 import wox.log;
 
-enum APP_VERSION = "v0.4.0";
+enum APP_VERSION = "v0.5.0";
 
 int main(string[] args) {
 	// args before -- go to wox, args after -- go to the buildfile
