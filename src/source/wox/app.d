@@ -11,11 +11,11 @@ static import std.path;
 import std.parallelism : totalCPUs;
 import commandr;
 
+import wox.host.meta;
 import wox.host.builder;
 import wox.log;
 
 enum APP_VERSION = "v0.4.0";
-enum DEFAULT_BUILDFILE_NAME = "build.wox";
 
 int main(string[] args) {
 	// args before -- go to wox, args after -- go to the buildfile

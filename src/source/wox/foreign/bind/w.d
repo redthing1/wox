@@ -33,6 +33,8 @@ struct BindForeignW {
                 return &W.path_basename;
             case "path_extname(_)":
                 return &W.path_extname;
+            case "abspath(_)":
+                return &W.abspath;
             case "file_exists(_)":
                 return &W.file_exists;
             case "log_err(_)":
@@ -171,6 +173,15 @@ struct BindForeignW {
             auto path = WrenUtils.wren_expect_slot_string(vm, 1).to!string;
 
             auto result = std.path.extension(path);
+
+            wrenSetSlotString(vm, 0, result.toStringz);
+        }
+
+        // abspath(path) -> string
+        static void abspath(WrenVM* vm) {
+            auto path = WrenUtils.wren_expect_slot_string(vm, 1).to!string;
+
+            auto result = std.path.absolutePath(path);
 
             wrenSetSlotString(vm, 0, result.toStringz);
         }
