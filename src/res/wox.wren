@@ -17,6 +17,7 @@ class W {
     foreign static path_basename(path)                      // basename of path
     foreign static path_extname(path)                       // extname of path
     foreign static file_exists(path)                        // does file exist?
+    foreign static abspath(path)                            // absolute path
 
     static replace_many(list, from_str, to_str) {
         return list.map{|x| x.replace(from_str, to_str)}.toList
@@ -53,6 +54,9 @@ class W {
     static exts_add(paths, ext) {
         return paths.map{|x| ext_add(x, ext)}.toList
     }
+    static abspaths(paths) {
+        return paths.map{|x| abspath(x)}.toList
+    }
 
     // logging
     foreign static log_err(msg)                             // log err msg
@@ -72,6 +76,13 @@ class W {
         var ret = []
         for (i in 0...(seq1.count.min(seq2.count))) {
             ret.add([seq1[i], seq2[i]])
+        }
+        return ret
+    }
+    static flatten(list_list) {
+        var ret = []
+        for (list in list_list) {
+            ret = ret + list
         }
         return ret
     }
@@ -147,6 +158,26 @@ class W {
         }
         return footprints
     }
+    static relative_path(base_path, path) {
+        return path_join([base_path, path])
+    }
+    static relative_paths(base_path, paths) {
+        return paths.map{|x| relative_path(base_path, x)}.toList
+    }
+    // static make_footprint_relative(base_path, footprint) {
+    //     return Footprint.new(
+    //         relative_path(base_path, footprint.name),
+    //         footprint.reality
+    //     )
+    // }
+    // static make_recipe_relative(base_path, recipe) {
+    //     var inputs = recipe.inputs.map{|x| make_footprint_relative(base_path, x)}.toList
+    //     var outputs = recipe.outputs.map{|x| make_footprint_relative(base_path, x)}.toList
+    //     return Recipe.new(recipe.name, inputs, outputs, recipe.steps)
+    // }
+    // static make_recipes_relative(base_path, recipes) {
+    //     return recipes.map{|x| make_recipe_relative(base_path, x)}.toList
+    // }
 }
 
 // models
