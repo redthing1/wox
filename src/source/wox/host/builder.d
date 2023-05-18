@@ -89,7 +89,7 @@ class WoxBuilder {
 
     extern (C) static WrenLoadModuleResult wren_load_module(WrenVM* vm, const(char)* name) {
         import std.algorithm: joiner;
-        
+
         auto name_str = name.to!string;
         log.trace("trying to load module %s", name_str);
         auto possible_path_bases = [
@@ -396,7 +396,7 @@ class WoxBuilder {
                     ~ format("%s", node.recipe.name).color(fg.green)
                     ~ "'\n";
                 auto emph_col = fg.blue;
-                auto emph2_col = fg.red;
+                auto emph2_col = fg.yellow;
                 sb ~= "  inputs  : "
                     ~ format("%s", node.recipe.inputs).color(emph_col)
                     ~ "\n";
